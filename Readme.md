@@ -32,6 +32,19 @@
 
 - check then if the kafka and zookeeper services run by executing
 
+ ```
+zkCli.sh -cmd ls /brokers/ids
+zkCli.sh -cmd get /brokers/ids/1
+   ```
+
+
+ ```
+ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+ bin/kafka-topics.sh --list --zookeeper localhost:2181
+   ```
+
+
+
 ## Run the benchmark
 
 Simply start the main method located in `LinearRoadKafkaBenchmark` and pass the the input path to the raw data file (e.g. `--data-path=/home/tafyun/IdeaProjects/linearroad-java-driver/src/main/resources/datafile20seconds.dat`)
