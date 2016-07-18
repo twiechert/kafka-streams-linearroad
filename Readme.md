@@ -2,7 +2,7 @@
 
 - (optional) delete existing containers
   ```
-    docker rm --force `docker ps -q`
+    docker rm --force `docker ps -qa`
    ```
 - create three containers using:
   ```
@@ -10,6 +10,10 @@
     docker run -d -P --name kafka-02 ssh-ubuntu
     docker run -d -P --name kafka-03 ssh-ubuntu
     ```
+
+ docker run -d -P --name kafka-01 twiechert/kafka-node1 'sudo service kafka-server start; sudo service zookeeper-server start;'
+
+docker exec $(docker ps -aq) sudo service kafka-server start
 
 - inspect the machine'S ip addresses using:
 
@@ -41,9 +45,16 @@ zkCli.sh -cmd get /brokers/ids/1
  ```
  bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
  bin/kafka-topics.sh --list --zookeeper localhost:2181
+ bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning
    ```
 
 
+
+- (optional) stop existing containers
+
+  ```
+    docker stop `docker ps -qa`
+  ```
 
 ## Run the benchmark
 

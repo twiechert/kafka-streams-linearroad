@@ -2,16 +2,16 @@ package de.twiechert.linroad.kafka;
 
 import de.twiechert.linroad.jdriver.DataDriver;
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
+import de.twiechert.linroad.kafka.stream.AccidentDetectionStreamBuilder;
+import de.twiechert.linroad.kafka.stream.LatestAverageVelocityStreamBuilder;
+import net.moznion.random.string.RandomStringGenerator;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.streams.StreamsConfig;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -21,8 +21,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.swing.text.Position;
 import java.util.Properties;
 
 /**
@@ -47,13 +45,18 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         private final Context context;
         private final PositionReporter positionReporter;
-        private final TollNotifier tollNotifier;
+        private final LatestAverageVelocityStreamBuilder carInSegStreamBuilder;
+        private final AccidentDetectionStreamBuilder accidentDetectionStreamBuilder;
 
         @Autowired
-        public BenchmarkRunner(Context context, PositionReporter positionReporter, TollNotifier tollNotifier) {
+        public BenchmarkRunner(Context context,
+                               PositionReporter positionReporter,
+                               LatestAverageVelocityStreamBuilder tollNotifier,
+                               AccidentDetectionStreamBuilder accidentDetectionStreamBuilder) {
             this.context = context;
             this.positionReporter = positionReporter;
-            this.tollNotifier = tollNotifier;
+            this.carInSegStreamBuilder = tollNotifier;
+            this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
         }
 
         @Override
@@ -62,13 +65,20 @@ public class LinearRoadKafkaBenchmarkApplication {
             context.startExperiment();
             logger.debug("Starting position report");
             positionReporter.startPositionReport();
+            // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
+            //Thread.sleep(3000L);
+
             logger.debug("Starting toll notification");
-            tollNotifier.startNotifying();
+            carInSegStreamBuilder.buildStream();
+         //  accidentDetectionStreamBuilder.buildStream();
         }
     }
 
     @Component
     public static class Context {
+
+        private final RandomStringGenerator generator = new RandomStringGenerator();
+
 
         @Value("${linearroad.data.path}")
         private String filePath;
@@ -77,9 +87,9 @@ public class LinearRoadKafkaBenchmarkApplication {
         private String bootstrapservers;
 
         private Properties producerConfig = new Properties();
-        private Properties streamConfig = new Properties();
 
 
+        private String applicationId = generator.generateByRegex("[0-9a-z]{3}");
         private DateTime benchmarkStartedAt = null; //  DateTime.now();
 
         public Context() {
@@ -98,8 +108,8 @@ public class LinearRoadKafkaBenchmarkApplication {
             return filePath;
         }
 
-        public Properties getStreamConfig() {
-            return streamConfig;
+        public String getApplicationId() {
+            return applicationId;
         }
 
         public Properties getProducerConfig() {
@@ -107,20 +117,16 @@ public class LinearRoadKafkaBenchmarkApplication {
         }
 
         private void configure() {
+
             producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
             producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
             producerConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
             producerConfig.put(ProducerConfig.LINGER_MS_CONFIG,  1);
             producerConfig.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
-            producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "de.twiechert.linroad.kafka.core.StringArraySerializer");
-            producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "de.twiechert.linroad.kafka.core.StringArraySerializer");
+            producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, PositionReporter.KeySerializer.class.getName());
+            producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, PositionReporter.ValueSerializer.class.getName());
 
-            streamConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark");
-            streamConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
-            streamConfig.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "172.17.0.2:2181");
-           // streamConfig.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, "de.twiechert.linroad.kafka.core.StringArraySerde");
-           // streamConfig.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, "de.twiechert.linroad.kafka.core.StringArraySerde");
 
         }
     }

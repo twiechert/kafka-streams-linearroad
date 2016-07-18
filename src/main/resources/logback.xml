@@ -5,10 +5,10 @@
             <pattern>%d %5p | %t | %-55logger{55} | %m %n</pattern>
         </encoder>
     </appender>
-    <root level="info" additivity="false">
+    <root level="warn" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </root>
-    <logger name="de.twiechert.linroad" level="debug" ref="CONSOLE" additivity="false">
+    <logger name="de.twiechert" level="debug" ref="CONSOLE" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
 </configuration>

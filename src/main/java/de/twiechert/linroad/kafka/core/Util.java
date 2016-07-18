@@ -17,8 +17,25 @@ public class Util {
        this.context = context;
     }
 
-    public String minuteOfReport(String timestamp) {
-        int timestampInt = Integer.parseInt(timestamp);
-        return (timestampInt/60)+1+"";
+    public static int minuteOfReport(int timestamp) {
+        return (timestamp/60)+1;
     }
+
+    public static String str(Object ob) {
+        return ob.toString();
+    }
+
+    public static Integer pInt(String ob) {
+        return Integer.parseInt(ob);
+    }
+
+    public static Long pLng(String ob) {
+        return Long.parseLong(ob);
+    }
+
+    public static Double pDob(String ob) {
+        return Double.parseDouble(ob);
+    }
+
+
 }
