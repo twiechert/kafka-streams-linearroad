@@ -36,18 +36,6 @@ public class AccidentDetectionTest {
     @Test
     public void createAccidents() {
 
-        Producer<StrTuple, StrTuple> producer = new KafkaProducer<>(context.getProducerConfig());
-
-        // (Type = 0, Time, VID, Spd, XWay, Lane, Dir, Seg, Pos)
-        // key -> Type = 0, Time, VID,  | value -> Spd, XWay, Lane, Dir, Seg, Pos
-        logger.debug("Sending data to simulate an accident");
-        for(int i = 1; i <= 26; i++) {
-            producer.send(new ProducerRecord<>(PositionReporter.TOPIC, new StrTuple("0", 15*i+"", "v1"),
-                    new StrTuple("22", "3", "2", "0", "33", "43")));
-            producer.send(new ProducerRecord<>(PositionReporter.TOPIC, new StrTuple("0", 16*i+"", "v2"),
-                    new StrTuple("22", "3", "2", "0", "33", "43")));
-        }
-
         accidentDetectionStreamBuilder.buildStream();
 
 

@@ -4,6 +4,7 @@ import de.twiechert.linroad.jdriver.DataDriver;
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
 import de.twiechert.linroad.kafka.stream.AccidentDetectionStreamBuilder;
 import de.twiechert.linroad.kafka.stream.LatestAverageVelocityStreamBuilder;
+import de.twiechert.linroad.kafka.stream.NumberOfVehiclesStreamBuilder;
 import net.moznion.random.string.RandomStringGenerator;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.joda.time.DateTime;
@@ -47,16 +48,19 @@ public class LinearRoadKafkaBenchmarkApplication {
         private final PositionReporter positionReporter;
         private final LatestAverageVelocityStreamBuilder carInSegStreamBuilder;
         private final AccidentDetectionStreamBuilder accidentDetectionStreamBuilder;
+        private final NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
 
         @Autowired
         public BenchmarkRunner(Context context,
                                PositionReporter positionReporter,
                                LatestAverageVelocityStreamBuilder tollNotifier,
-                               AccidentDetectionStreamBuilder accidentDetectionStreamBuilder) {
+                               AccidentDetectionStreamBuilder accidentDetectionStreamBuilder,
+                               NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder) {
             this.context = context;
             this.positionReporter = positionReporter;
             this.carInSegStreamBuilder = tollNotifier;
             this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
+            this.numberOfVehiclesStreamBuilder = numberOfVehiclesStreamBuilder;
         }
 
         @Override
@@ -68,8 +72,9 @@ public class LinearRoadKafkaBenchmarkApplication {
             // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
             //Thread.sleep(3000L);
 
-            logger.debug("Starting toll notification");
-            carInSegStreamBuilder.buildStream();
+            numberOfVehiclesStreamBuilder.buildStream();
+
+           // carInSegStreamBuilder.buildStream();
          //  accidentDetectionStreamBuilder.buildStream();
         }
     }
