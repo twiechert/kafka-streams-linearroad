@@ -1,94 +1,97 @@
 package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.PositionReporter;
-import de.twiechert.linroad.kafka.core.StreamBuilder;
+import de.twiechert.linroad.kafka.core.feeder.DataFeeder;
+import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
 import de.twiechert.linroad.kafka.core.Util;
+import de.twiechert.linroad.kafka.core.feeder.PositionReportHandler;
+import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
-import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
-import org.javatuples.*;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.processor.TimestampExtractor;
+import org.javatuples.Pair;
+import org.javatuples.Sextet;
+import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import static de.twiechert.linroad.kafka.core.Util.*;
-import java.util.Properties;
+import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
 
 /**
- * Created by tafyun on 31.05.16.
+ * This class builds the stream of latest average velocities keyed by (expressway, segment, direction).
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class LatestAverageVelocityStreamBuilder extends StreamBuilder{
+public class LatestAverageVelocityStreamBuilder extends StreamBuilder<Triplet<Integer, Integer, Boolean>, Pair<Long, Double>> {
 
-    public static final String CAR_IN_SEGMENT_EXPRESSWAY_DIRECTION_AT_MINUTE_TOPIC = "LAV";
+    public static final String TOPIC = "LAV";
 
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(LatestAverageVelocityStreamBuilder.class);
 
     @Autowired
     public LatestAverageVelocityStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util);
+        super(context, util,  new KeySerde(), new ValueSerde());
     }
 
-    private TupleSerdes.TripletSerdes<Integer, Integer, Boolean> tripletKeySerdes =
-            new TupleSerdes.TripletSerdes<>();
-
-    private TupleSerdes.PairSerdes<Integer, Double> valueSerdes =
-            new TupleSerdes.PairSerdes<>();
-
-    private Serde<Windowed<Triplet<Integer, Integer, Boolean>>> windowedKeySerde =
-            Serdes.serdeFrom(new WindowedSerializer<>(tripletKeySerdes.serializer()), new WindowedDeserializer<>(tripletKeySerdes.deserializer()));
 
     @Override
-    @Async
-    public void buildStream() {
+    protected KStream<Triplet<Integer, Integer, Boolean>, Pair<Long, Double>> getStream(KStreamBuilder builder) {
         logger.debug("Building stream to identify latest average velocity");
 
-        KStreamBuilder builder = new KStreamBuilder();
-        KStream<Pair<Integer, Integer>, Sextet<Integer, Integer, Integer, Boolean, Integer, Integer>> source1 =
-                builder.stream(PositionReporter.TOPIC);
+        KStream<Pair<Long, Integer>, Sextet<Integer, Integer, Integer, Boolean, Integer, Integer>> source1 =
+                builder.stream(PositionReportHandler.TOPIC);
 
-        KStream<Windowed<Triplet<Integer, Integer, Boolean>>, Pair<Integer, Double>> stream =
-                // map to (expressway, segment, direction) (speed)
-        source1.map((k,v) -> new KeyValue<>(new Triplet<>(v.getValue1(), v.getValue4(), v.getValue3()), new Pair<>(v.getValue0(), k.getValue0())  ))
-                // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
-                .aggregateByKey(() -> new Triplet<>(0, 0d, 0),
-                        (key, value, aggregat) ->  {
-                         int n = aggregat.getValue0()+1;
-                    return new Triplet<>(n,aggregat.getValue1()*(((double)n-1)/n)+(double)value.getValue0()/n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1()) + 1 ));
-                }  , TimeWindows.of("window", 5*60).advanceBy(60)).toStream().map((k, v) -> new KeyValue<>(k, new Pair<>(v.getValue2(), v.getValue1())));
+        return
+                // map to (expressway, segment, direction) -> (speed)
+                source1.map((k, v) -> new KeyValue<>(new Triplet<>(v.getValue1(), v.getValue4(), v.getValue3()), new Pair<>(v.getValue0(), k.getValue0())))
+                        // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
+                        .aggregateByKey(() -> new Triplet<>(0, 0d, 0l),
+                                (key, value, aggregat) -> {
+                                    int n = aggregat.getValue0() + 1;
+                                    return new Triplet<>(n, aggregat.getValue1() * (((double) n - 1) / n) + (double) value.getValue0() / n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1()) + 1));
+                                }, TimeWindows.of("window", 5 * 60).advanceBy(60)).toStream().map((k, v) -> new KeyValue<>(k.key(), new Pair<>(v.getValue2(), v.getValue1())));
 
-        stream.print();
-        stream.to(windowedKeySerde, valueSerdes, CAR_IN_SEGMENT_EXPRESSWAY_DIRECTION_AT_MINUTE_TOPIC);
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder, this.getStreamConfig());
-        kafkaStreams.start();
     }
+
 
 
     @Override
-    public Properties getStreamConfig() {
-        Properties properties = new Properties();
-        properties.putAll(this.getBaseProperties());
-        properties.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, LatestAverageVelocityStreamBuilder.KeySerde.class.getName() );
-        properties.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, LatestAverageVelocityStreamBuilder.ValueSerde.class.getName() );
-        properties.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, PositionReporter.TimeStampExtractor.class.getName() );
-
-        return properties;
+    protected String getOutputTopic() {
+        return TOPIC;
     }
 
 
 
-    public static class KeySerde extends TupleSerdes.PairSerdes<Integer, Integer> {}
-    public static class ValueSerde extends TupleSerdes.SextetSerdes<Integer, Integer, Integer, Boolean, Integer, Integer> {}
+    /**
+     * This timestamp extractor can be used for stream generated by @link{LatestAverageVelocityStreamBuilder} but also for that generated by
+     *
+     * @link{NumberOfVehiclesStreamBuilder}
+     */
+    public static class TimeStampExtractor extends TupleTimestampExtrator implements TimestampExtractor {
+        public TimeStampExtractor() {
+            super(KeyValue.Value, 0);
+        }
+    }
 
+    public static class KeySerde extends SerdePrototype<Triplet<Integer, Integer, Boolean>> {
+        public KeySerde() {
+            super(new TupleSerdes.TripletSerdes<>());
+        }
+    }
+
+
+    public static class ValueSerde extends SerdePrototype<Pair<Long, Double>> {
+        public ValueSerde() {
+            super(new TupleSerdes.PairSerdes<>());
+        }
+    }
 
 }

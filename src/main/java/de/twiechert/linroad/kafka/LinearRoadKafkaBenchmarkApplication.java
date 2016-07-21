@@ -2,9 +2,8 @@ package de.twiechert.linroad.kafka;
 
 import de.twiechert.linroad.jdriver.DataDriver;
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
-import de.twiechert.linroad.kafka.stream.AccidentDetectionStreamBuilder;
-import de.twiechert.linroad.kafka.stream.LatestAverageVelocityStreamBuilder;
-import de.twiechert.linroad.kafka.stream.NumberOfVehiclesStreamBuilder;
+import de.twiechert.linroad.kafka.core.feeder.DataFeeder;
+import de.twiechert.linroad.kafka.stream.*;
 import net.moznion.random.string.RandomStringGenerator;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.joda.time.DateTime;
@@ -45,37 +44,49 @@ public class LinearRoadKafkaBenchmarkApplication {
     public static class BenchmarkRunner implements CommandLineRunner {
 
         private final Context context;
-        private final PositionReporter positionReporter;
-        private final LatestAverageVelocityStreamBuilder carInSegStreamBuilder;
+        private final DataFeeder positionReporter;
+        private final LatestAverageVelocityStreamBuilder latestAverageVelocityStreamBuilder;
         private final AccidentDetectionStreamBuilder accidentDetectionStreamBuilder;
+        private final AccidentNotificationStreamBuilder accidentNotificationStreamBuilder;
+
         private final NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
+        private final CurrentTollStreamBuilder currentTollStreamBuilder;
+
 
         @Autowired
         public BenchmarkRunner(Context context,
-                               PositionReporter positionReporter,
-                               LatestAverageVelocityStreamBuilder tollNotifier,
+                               DataFeeder positionReporter,
+                               LatestAverageVelocityStreamBuilder latestAverageVelocityStreamBuilder,
                                AccidentDetectionStreamBuilder accidentDetectionStreamBuilder,
-                               NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder) {
+                               NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder,
+                               CurrentTollStreamBuilder currentTollStreamBuilder,
+                               AccidentNotificationStreamBuilder accidentNotificationStreamBuilder) {
             this.context = context;
             this.positionReporter = positionReporter;
-            this.carInSegStreamBuilder = tollNotifier;
+            this.latestAverageVelocityStreamBuilder = latestAverageVelocityStreamBuilder;
             this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
             this.numberOfVehiclesStreamBuilder = numberOfVehiclesStreamBuilder;
+            this.currentTollStreamBuilder = currentTollStreamBuilder;
+            this.accidentNotificationStreamBuilder = accidentNotificationStreamBuilder;
         }
 
         @Override
         public void run(String... var1) throws Exception {
             logger.debug("Starting benchmark");
             context.startExperiment();
-            logger.debug("Starting position report");
-            positionReporter.startPositionReport();
             // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
-            //Thread.sleep(3000L);
 
-            numberOfVehiclesStreamBuilder.buildStream();
 
-           // carInSegStreamBuilder.buildStream();
-         //  accidentDetectionStreamBuilder.buildStream();
+            latestAverageVelocityStreamBuilder.startStream(false);
+            numberOfVehiclesStreamBuilder.startStream(true);
+
+            //currentTollStreamBuilder.startStream(false);
+
+            logger.debug("Start feeding of tuples");
+            positionReporter.startFeeding();
+
+            accidentDetectionStreamBuilder.startStream(true);
+            accidentNotificationStreamBuilder.startStream(true);
         }
     }
 
@@ -91,14 +102,13 @@ public class LinearRoadKafkaBenchmarkApplication {
         @Value("${linearroad.kafka.bootstrapservers}")
         private String bootstrapservers;
 
-        private Properties producerConfig = new Properties();
 
 
         private String applicationId = generator.generateByRegex("[0-9a-z]{3}");
         private DateTime benchmarkStartedAt = null; //  DateTime.now();
 
         public Context() {
-            this.configure();
+
         }
 
         public int getCurrentRuntimeInSeconds() {
@@ -117,23 +127,8 @@ public class LinearRoadKafkaBenchmarkApplication {
             return applicationId;
         }
 
-        public Properties getProducerConfig() {
-            return producerConfig;
-        }
-
-        private void configure() {
-
-            producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
-            producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-            producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-            producerConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
-            producerConfig.put(ProducerConfig.LINGER_MS_CONFIG,  1);
-            producerConfig.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
-            producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, PositionReporter.KeySerializer.class.getName());
-            producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, PositionReporter.ValueSerializer.class.getName());
 
 
-        }
     }
 
 

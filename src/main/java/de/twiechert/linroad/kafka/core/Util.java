@@ -17,7 +17,7 @@ public class Util {
        this.context = context;
     }
 
-    public static int minuteOfReport(int timestamp) {
+    public static long minuteOfReport(long timestamp) {
         return (timestamp/60)+1;
     }
 
@@ -28,6 +28,7 @@ public class Util {
     public static Integer pInt(String ob) {
         return Integer.parseInt(ob);
     }
+
 
     public static Long pLng(String ob) {
         return Long.parseLong(ob);
