@@ -39,7 +39,7 @@ public class TupleSerdes {
 
     }
 
-    public static class SeptetSerdes  extends ByteArraySerde<Septet> {
+    public static class SeptetSerdes<A, B, C, D, E, F, G>   extends ByteArraySerde<Septet<A, B, C, D, E, F, G> > {
 
 
     }

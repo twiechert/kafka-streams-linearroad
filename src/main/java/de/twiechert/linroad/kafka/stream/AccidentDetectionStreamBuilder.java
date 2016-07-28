@@ -1,9 +1,8 @@
 package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.feeder.DataFeeder;
 import de.twiechert.linroad.kafka.core.Util;
-import de.twiechert.linroad.kafka.core.feeder.PositionReportHandler;
+import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import org.apache.kafka.common.serialization.Serdes;
@@ -26,7 +25,7 @@ import java.util.stream.IntStream;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class AccidentDetectionStreamBuilder extends StreamBuilder<Triplet<Integer, Integer, Boolean>, Long> {
+public class AccidentDetectionStreamBuilder extends TableAndStreamBuilder.StreamBuilder<Triplet<Integer, Integer, Boolean>, Long> {
 
     public static final String TOPIC = "ACC";
 
@@ -35,7 +34,7 @@ public class AccidentDetectionStreamBuilder extends StreamBuilder<Triplet<Intege
 
     @Autowired
     public AccidentDetectionStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util, new TupleSerdes.TripletSerdes<>(), new ValueSerde());
+        super(context, util, new KeySerde(), new ValueSerde());
     }
 
     @Override
@@ -80,6 +79,11 @@ public class AccidentDetectionStreamBuilder extends StreamBuilder<Triplet<Intege
 
 
 
+    public static class KeySerde extends SerdePrototype<Triplet<Integer, Integer, Boolean>> {
+        public KeySerde() {
+            super(new TupleSerdes.TripletSerdes<>());
+        }
+    }
 
     public static class ValueSerde extends SerdePrototype<Long> {
         public ValueSerde() {

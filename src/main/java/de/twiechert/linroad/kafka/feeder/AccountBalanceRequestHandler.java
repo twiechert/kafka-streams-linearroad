@@ -1,10 +1,8 @@
-package de.twiechert.linroad.kafka.core.feeder;
+package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serializer;
-import org.javatuples.Pair;
-import org.javatuples.Sextet;
 import org.javatuples.Triplet;
 
 import static de.twiechert.linroad.kafka.core.Util.pInt;
@@ -12,13 +10,15 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
 
 /**
  * Created by tafyun on 21.07.16.
+ *
+ * Key corresponds to (Time: t, VID: v, QID: q).
  */
-public class AccountBalanceHandler extends TupleHandler<Triplet<Long, Integer, Integer>, Void> {
+public class AccountBalanceRequestHandler extends TupleHandler<Triplet<Long, Integer, Integer>, Void> {
 
     public static final String TOPIC = "BALANCE";
 
 
-    public AccountBalanceHandler() {
+    public AccountBalanceRequestHandler() {
         super(2);
     }
 

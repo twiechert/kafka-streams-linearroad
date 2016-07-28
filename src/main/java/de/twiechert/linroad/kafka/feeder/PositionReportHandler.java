@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.core.feeder;
+package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;

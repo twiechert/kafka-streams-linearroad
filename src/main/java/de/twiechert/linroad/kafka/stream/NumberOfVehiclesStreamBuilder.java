@@ -1,9 +1,8 @@
 package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.feeder.DataFeeder;
 import de.twiechert.linroad.kafka.core.Util;
-import de.twiechert.linroad.kafka.core.feeder.PositionReportHandler;
+import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import org.apache.kafka.streams.KeyValue;
@@ -27,7 +26,7 @@ import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class NumberOfVehiclesStreamBuilder extends StreamBuilder<Triplet<Integer, Integer, Boolean>, Pair<Long, Integer>> {
+public class NumberOfVehiclesStreamBuilder extends TableAndStreamBuilder.StreamBuilder<Triplet<Integer, Integer, Boolean>, Pair<Long, Integer>> {
 
     public static final String TOPIC = "NOV";
 

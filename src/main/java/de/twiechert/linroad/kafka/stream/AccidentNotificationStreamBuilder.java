@@ -1,10 +1,10 @@
 package de.twiechert.linroad.kafka.stream;
 
-import de.twiechert.linroad.kafka.core.feeder.DataFeeder;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.FallbackTimestampExtractor;
+import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
 import de.twiechert.linroad.kafka.core.Util;
-import de.twiechert.linroad.kafka.core.feeder.PositionReportHandler;
+import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.streams.KeyValue;
@@ -30,7 +30,7 @@ import java.util.Properties;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class AccidentNotificationStreamBuilder extends StreamBuilder {
+public class AccidentNotificationStreamBuilder extends TableAndStreamBuilder.StreamBuilder<Triplet<Integer, Integer, Boolean>, Long> {
 
     private static final String TOPIC = "ACC_NOT";
 
@@ -44,7 +44,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder {
     }
 
     @Override
-    protected KStream getStream(KStreamBuilder builder) {
+    protected KStream<Triplet<Integer, Integer, Boolean>, Long> getStream(KStreamBuilder builder) {
         logger.debug("Building stream to notify drivers about accidents");
 
         /**
@@ -60,7 +60,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder {
 
         // first transform such that keys are equal -> allows joining
         KStream<Triplet<Integer, Integer, Boolean>, Long> positionReportByExpressWaySegmentDirection = positionReports.map((k, v) -> new KeyValue<>(new Triplet<>(v.getValue1(), v.getValue4(), v.getValue3()), k.getValue0()))
-                .through("re-partioning-position");
+                .through("POS_ACC_NOT");
         // repartitioning is required if an existing stream source is "modified" -> https://groups.google.com/forum/#!topic/confluent-platform/t2N4vr1MxgQ
 
         // IMPORTANT for joining: , but only if q (position report) was emitted
@@ -90,7 +90,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder {
     }
 
     @Override
-    protected StreamBuilder.Options getOptions() {
+    protected TableAndStreamBuilder.Options getOptions() {
         return new Options("output.csv");
     }
 
@@ -104,10 +104,14 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder {
      * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
      */
     public static class TimeStampExtractor extends FallbackTimestampExtractor implements TimestampExtractor {
+
+
         @Override
         public long extractTimestamp(ConsumerRecord<Object, Object> record) {
 
-            return (Long)record.value();
+                return (Long)record.value();
+
+
         }
     }
 }

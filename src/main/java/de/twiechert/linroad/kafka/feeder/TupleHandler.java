@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.core.feeder;
+package de.twiechert.linroad.kafka.feeder;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -35,10 +35,12 @@ public abstract class TupleHandler<Outputkey, OutputValue> {
 
     }
 
-    public void handle(String[] tuple) {
+    public boolean handle(String[] tuple) {
         if(pInt(tuple[0]) == handleOn) {
             producer.send(new ProducerRecord<Outputkey, OutputValue>(this.getTopic(), this.transformKey(tuple), this.transformValue(tuple)));
+            return true;
         }
+        return false;
     }
 
     protected abstract Outputkey transformKey(String[] tuple);

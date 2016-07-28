@@ -8,7 +8,7 @@ import org.javatuples.Tuple;
  * This class is able to extract timestamps from tuples
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-public class TupleTimestampExtrator implements TimestampExtractor{
+public class TupleTimestampExtrator extends FallbackTimestampExtractor implements TimestampExtractor {
 
 
     private final KeyValue keyValue;
@@ -24,8 +24,18 @@ public class TupleTimestampExtrator implements TimestampExtractor{
         Key, Value
     }
 
+
     @Override
-    public long extract(ConsumerRecord<Object, Object> record) {
-            return (keyValue.equals(KeyValue.Key)) ?  (long) (( Tuple) record.key()).getValue(pos) : (long) (( Tuple) record.value()).getValue(pos);
+    public long extractTimestamp(ConsumerRecord<Object, Object> record) {
+        if(keyValue.equals(KeyValue.Key)) {
+            if(record.key() instanceof Tuple)
+                return (long) ((Tuple) record.key()).getValue(pos);
+            else return (long)  record.key();
+
+        } else {
+            if(record.value() instanceof Tuple)
+                return (long) ((Tuple) record.value()).getValue(pos);
+            else return (long)  record.value();
+        }
     }
 }

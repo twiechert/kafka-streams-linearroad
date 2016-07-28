@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.core.feeder;
+package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
@@ -48,7 +48,9 @@ public class DataFeeder {
 
     @Async
     public void startFeeding() {
-        new TupleReceivedCallback(new PositionReportHandler(), new AccountBalanceHandler());
+        new TupleReceivedCallback(new PositionReportHandler(),
+                                  new AccountBalanceRequestHandler(),
+                                  new DailyExpenditureRequestHandler());
 
     }
 

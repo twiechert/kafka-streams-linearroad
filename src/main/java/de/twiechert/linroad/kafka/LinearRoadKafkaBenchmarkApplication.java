@@ -2,10 +2,11 @@ package de.twiechert.linroad.kafka;
 
 import de.twiechert.linroad.jdriver.DataDriver;
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
-import de.twiechert.linroad.kafka.core.feeder.DataFeeder;
+import de.twiechert.linroad.kafka.feeder.DataFeeder;
 import de.twiechert.linroad.kafka.stream.*;
+import de.twiechert.linroad.kafka.stream.responses.Test;
+import de.twiechert.linroad.kafka.stream.responses.Test2;
 import net.moznion.random.string.RandomStringGenerator;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
@@ -20,8 +21,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-
-import java.util.Properties;
 
 /**
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
@@ -51,6 +50,9 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         private final NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
         private final CurrentTollStreamBuilder currentTollStreamBuilder;
+        private final CurrentTollStreamBuilder2 currentTollStreamBuilder2;
+        private final Test test;
+        private final Test2 test2;
 
 
         @Autowired
@@ -60,14 +62,21 @@ public class LinearRoadKafkaBenchmarkApplication {
                                AccidentDetectionStreamBuilder accidentDetectionStreamBuilder,
                                NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder,
                                CurrentTollStreamBuilder currentTollStreamBuilder,
-                               AccidentNotificationStreamBuilder accidentNotificationStreamBuilder) {
+                               AccidentNotificationStreamBuilder accidentNotificationStreamBuilder,
+                               CurrentTollStreamBuilder2 currentTollStreamBuilder2,
+                               Test test,
+                               Test2 test2) {
             this.context = context;
             this.positionReporter = positionReporter;
             this.latestAverageVelocityStreamBuilder = latestAverageVelocityStreamBuilder;
             this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
             this.numberOfVehiclesStreamBuilder = numberOfVehiclesStreamBuilder;
             this.currentTollStreamBuilder = currentTollStreamBuilder;
+            this.currentTollStreamBuilder2 = currentTollStreamBuilder2;
             this.accidentNotificationStreamBuilder = accidentNotificationStreamBuilder;
+            this.test2 = test2;
+
+            this.test = test;
         }
 
         @Override
@@ -75,18 +84,20 @@ public class LinearRoadKafkaBenchmarkApplication {
             logger.debug("Starting benchmark");
             context.startExperiment();
             // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
-
-
-            latestAverageVelocityStreamBuilder.startStream(false);
-            numberOfVehiclesStreamBuilder.startStream(true);
-
-            //currentTollStreamBuilder.startStream(false);
-
             logger.debug("Start feeding of tuples");
             positionReporter.startFeeding();
 
-            accidentDetectionStreamBuilder.startStream(true);
+            test.startStream(true);
+            test2.startStream(true);
+
+            latestAverageVelocityStreamBuilder.startStream(false);
+            numberOfVehiclesStreamBuilder.startStream(false);
+            currentTollStreamBuilder2.startStream(false);
+
+            //accidentDetectionStreamBuilder.startStream(true);
             accidentNotificationStreamBuilder.startStream(true);
+           // currentTollStreamBuilder.startStream(true);
+
         }
     }
 
