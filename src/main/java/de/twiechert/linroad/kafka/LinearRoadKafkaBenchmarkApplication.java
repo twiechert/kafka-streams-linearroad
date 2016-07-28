@@ -3,10 +3,21 @@ package de.twiechert.linroad.kafka;
 import de.twiechert.linroad.jdriver.DataDriver;
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
 import de.twiechert.linroad.kafka.feeder.DataFeeder;
+import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
+import de.twiechert.linroad.kafka.model.AverageVelocity;
+import de.twiechert.linroad.kafka.model.NumberOfVehicles;
+import de.twiechert.linroad.kafka.model.PositionReport;
+import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import de.twiechert.linroad.kafka.stream.*;
-import de.twiechert.linroad.kafka.stream.responses.Test;
-import de.twiechert.linroad.kafka.stream.responses.Test2;
 import net.moznion.random.string.RandomStringGenerator;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.javatuples.Pair;
+import org.javatuples.Quartet;
+import org.javatuples.Sextet;
+import org.javatuples.Triplet;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
@@ -21,6 +32,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+
+import java.util.Properties;
 
 /**
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
@@ -47,12 +60,10 @@ public class LinearRoadKafkaBenchmarkApplication {
         private final LatestAverageVelocityStreamBuilder latestAverageVelocityStreamBuilder;
         private final AccidentDetectionStreamBuilder accidentDetectionStreamBuilder;
         private final AccidentNotificationStreamBuilder accidentNotificationStreamBuilder;
-
+        private final PositionReportStreamBuilder positionReportStreamBuilder;
         private final NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
         private final CurrentTollStreamBuilder currentTollStreamBuilder;
-        private final CurrentTollStreamBuilder2 currentTollStreamBuilder2;
-        private final Test test;
-        private final Test2 test2;
+        private Properties streamConfig = new Properties();
 
 
         @Autowired
@@ -63,41 +74,52 @@ public class LinearRoadKafkaBenchmarkApplication {
                                NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder,
                                CurrentTollStreamBuilder currentTollStreamBuilder,
                                AccidentNotificationStreamBuilder accidentNotificationStreamBuilder,
-                               CurrentTollStreamBuilder2 currentTollStreamBuilder2,
-                               Test test,
-                               Test2 test2) {
+                               PositionReportStreamBuilder positionReportStreamBuilder) {
             this.context = context;
+            this.positionReportStreamBuilder = positionReportStreamBuilder;
             this.positionReporter = positionReporter;
             this.latestAverageVelocityStreamBuilder = latestAverageVelocityStreamBuilder;
             this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
             this.numberOfVehiclesStreamBuilder = numberOfVehiclesStreamBuilder;
             this.currentTollStreamBuilder = currentTollStreamBuilder;
-            this.currentTollStreamBuilder2 = currentTollStreamBuilder2;
             this.accidentNotificationStreamBuilder = accidentNotificationStreamBuilder;
-            this.test2 = test2;
+            streamConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark-" + this.context.getApplicationId());
+            streamConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
+            streamConfig.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "172.17.0.2:2181");
 
-            this.test = test;
+            streamConfig.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, PositionReportHandler.TimeStampExtractor.class.getName());
         }
 
         @Override
         public void run(String... var1) throws Exception {
             logger.debug("Starting benchmark");
+            KStreamBuilder builder = new KStreamBuilder();
+
             context.startExperiment();
             // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
             logger.debug("Start feeding of tuples");
             positionReporter.startFeeding();
+            KStream<PositionReport.Key, PositionReport.Value> positionReportStream = positionReportStreamBuilder.getStream(builder);
+            KStream<XwaySegmentDirection, NumberOfVehicles>  numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
+            //numberOfVehiclesStream.print();
 
-            test.startStream(true);
-            test2.startStream(true);
+            KStream<XwaySegmentDirection, AverageVelocity>  latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
 
-            latestAverageVelocityStreamBuilder.startStream(false);
-            numberOfVehiclesStreamBuilder.startStream(false);
-            currentTollStreamBuilder2.startStream(false);
+            KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
+            accidentDetectionStream.print();
 
-            //accidentDetectionStreamBuilder.startStream(true);
-            accidentNotificationStreamBuilder.startStream(true);
-           // currentTollStreamBuilder.startStream(true);
+            KStream<XwaySegmentDirection, Long> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
+            accidentNotificationStream.print();
 
+            accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
+
+            KStream<XwaySegmentDirection, Quartet<Long, Double, Integer, Long>> currentToll = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
+            currentToll.print();
+
+            currentToll.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
+
+            KafkaStreams kafkaStreams = new KafkaStreams(builder, streamConfig);
+            kafkaStreams.start();
         }
     }
 
@@ -112,7 +134,6 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         @Value("${linearroad.kafka.bootstrapservers}")
         private String bootstrapservers;
-
 
 
         private String applicationId = generator.generateByRegex("[0-9a-z]{3}");
@@ -137,7 +158,6 @@ public class LinearRoadKafkaBenchmarkApplication {
         public String getApplicationId() {
             return applicationId;
         }
-
 
 
     }

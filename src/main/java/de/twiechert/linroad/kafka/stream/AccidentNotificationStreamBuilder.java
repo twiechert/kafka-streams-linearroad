@@ -2,16 +2,15 @@ package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.FallbackTimestampExtractor;
-import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
 import de.twiechert.linroad.kafka.core.Util;
-import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
+import de.twiechert.linroad.kafka.model.PositionReport;
+import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.processor.TimestampExtractor;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
@@ -22,15 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Properties;
-
 /**
  * This class notifies drivers about occured accidents if they are close-by according to the LR requirements.
  *
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class AccidentNotificationStreamBuilder extends TableAndStreamBuilder.StreamBuilder<Triplet<Integer, Integer, Boolean>, Long> {
+public class AccidentNotificationStreamBuilder extends StreamBuilder<XwaySegmentDirection, Long> {
 
     private static final String TOPIC = "ACC_NOT";
 
@@ -40,11 +37,11 @@ public class AccidentNotificationStreamBuilder extends TableAndStreamBuilder.Str
 
     @Autowired
     public AccidentNotificationStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util, new TupleSerdes.TripletSerdes<>(), new AccidentDetectionStreamBuilder.ValueSerde());
+        super(context, util, new XwaySegmentDirection.Serde(), new AccidentDetectionStreamBuilder.ValueSerde());
     }
 
-    @Override
-    protected KStream<Triplet<Integer, Integer, Boolean>, Long> getStream(KStreamBuilder builder) {
+    public KStream<XwaySegmentDirection, Long> getStream(KStream<PositionReport.Key, PositionReport.Value> positionReports,
+                                                        KStream<XwaySegmentDirection, Long> accidentReports) {
         logger.debug("Building stream to notify drivers about accidents");
 
         /**
@@ -52,21 +49,20 @@ public class AccidentNotificationStreamBuilder extends TableAndStreamBuilder.Str
          * that identifies a vehicle entering a segment 0 to 4 segments upstream of some accident location,
          * but only if q was emitted no earlier than theminute following theminutewhen the accident occurred, and no later than the minute the accident is
          */
-        KStream<Pair<Long, Integer>, Sextet<Integer, Integer, Integer, Boolean, Integer, Integer>> positionReports =
-                builder.stream(PositionReportHandler.TOPIC);
 
-        KStream<Triplet<Integer, Integer, Boolean>, Long> accidentReports =
-                builder.stream(new LatestAverageVelocityStreamBuilder.KeySerde(), new AccidentDetectionStreamBuilder.ValueSerde(), AccidentDetectionStreamBuilder.TOPIC);
 
         // first transform such that keys are equal -> allows joining
-        KStream<Triplet<Integer, Integer, Boolean>, Long> positionReportByExpressWaySegmentDirection = positionReports.map((k, v) -> new KeyValue<>(new Triplet<>(v.getValue1(), v.getValue4(), v.getValue3()), k.getValue0()))
-                .through("POS_ACC_NOT");
+        KStream<XwaySegmentDirection, Long> positionReportByExpressWaySegmentDirection = positionReports.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(v.getXway(), v.getSeg(), v.getDir()), k.getTime()))
+                .through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "POS_ACC_NOT");
+
         // repartitioning is required if an existing stream source is "modified" -> https://groups.google.com/forum/#!topic/confluent-platform/t2N4vr1MxgQ
 
         // IMPORTANT for joining: , but only if q (position report) was emitted
         // **no** earlier than the minute following them inutew hen the accident occurred.
         // i.e. the accident detection must be "before" up to one second
-        accidentReports.join(positionReportByExpressWaySegmentDirection, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("accident-notification").before(1))
+        accidentReports.through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_DET_NOT")
+                .join(positionReportByExpressWaySegmentDirection, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("ACC-NOT-WINDOW").before(1),
+                        new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), new Serdes.LongSerde())
                 .map((k, v) -> new KeyValue<>("", new Quartet<>(1, v.getValue0(), v.getValue1(), k.getValue1())));
 
         // key -> ""| value -> (Type: 1, Time: t, Emit: t?, Seg: s?)
@@ -75,31 +71,21 @@ public class AccidentNotificationStreamBuilder extends TableAndStreamBuilder.Str
     }
 
     @Override
-    protected String getOutputTopic() {
+    public String getOutputTopic() {
 
         return TOPIC;
     }
 
 
     @Override
-    public Properties getStreamConfig() {
-        Properties properties = new Properties();
-        properties.putAll(this.getBaseProperties());
-        properties.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, TimeStampExtractor.class.getName());
-        return properties;
-    }
-
-    @Override
-    protected TableAndStreamBuilder.Options getOptions() {
+    protected StreamBuilder.Options getOptions() {
         return new Options("output.csv");
     }
-
 
 
     /**
      * This class is able to extract timestamp from the values generated by this stream.
      * We use a Fallbacktimestamp extractor, because we can only specify one timestamp extractor per job ...
-     *
      *
      * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
      */
@@ -109,7 +95,7 @@ public class AccidentNotificationStreamBuilder extends TableAndStreamBuilder.Str
         @Override
         public long extractTimestamp(ConsumerRecord<Object, Object> record) {
 
-                return (Long)record.value();
+            return (Long) record.value();
 
 
         }

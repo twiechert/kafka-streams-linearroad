@@ -1,11 +1,11 @@
 package de.twiechert.linroad.kafka.stream;
 
-import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
-import de.twiechert.linroad.kafka.core.Util;
-import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
+import de.twiechert.linroad.kafka.model.AverageVelocity;
+import de.twiechert.linroad.kafka.model.PositionReport;
+import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
@@ -17,6 +17,7 @@ import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
@@ -27,46 +28,32 @@ import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class LatestAverageVelocityStreamBuilder extends TableAndStreamBuilder.StreamBuilder<Triplet<Integer, Integer, Boolean>, Pair<Long, Double>> {
+public class LatestAverageVelocityStreamBuilder {
 
-    public static final String TOPIC = "LAV";
 
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(LatestAverageVelocityStreamBuilder.class);
 
-    @Autowired
-    public LatestAverageVelocityStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util,  new KeySerde(), new ValueSerde());
+    public LatestAverageVelocityStreamBuilder() {
     }
 
 
-    @Override
-    protected KStream<Triplet<Integer, Integer, Boolean>, Pair<Long, Double>> getStream(KStreamBuilder builder) {
+    public KStream<XwaySegmentDirection, AverageVelocity> getStream(KStream<PositionReport.Key, PositionReport.Value> positionReportStream) {
         logger.debug("Building stream to identify latest average velocity");
-
-        KStream<Pair<Long, Integer>, Sextet<Integer, Integer, Integer, Boolean, Integer, Integer>> source1 =
-                builder.stream(PositionReportHandler.TOPIC);
 
         return
                 // map to (expressway, segment, direction) -> (speed)
-                source1.map((k, v) -> new KeyValue<>(new Triplet<>(v.getValue1(), v.getValue4(), v.getValue3()), new Pair<>(v.getValue0(), k.getValue0())))
+                positionReportStream.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(v.getXway(), v.getSeg(), v.getDir()), new Pair<>(v.getSpeed(), k.getTime())))
                         // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
                         .aggregateByKey(() -> new Triplet<>(0, 0d, 0l),
                                 (key, value, aggregat) -> {
                                     int n = aggregat.getValue0() + 1;
                                     return new Triplet<>(n, aggregat.getValue1() * (((double) n - 1) / n) + (double) value.getValue0() / n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1()) + 1));
-                                }, TimeWindows.of("window", 5 * 60).advanceBy(60)).toStream().map((k, v) -> new KeyValue<>(k.key(), new Pair<>(v.getValue2(), v.getValue1())));
+                                }, TimeWindows.of("LAV_WINDOW", 5 * 60).advanceBy(60), new XwaySegmentDirection.Serde(), new TupleSerdes.TripletSerdes<>())
+                        .toStream().map((k, v) -> new KeyValue<>(k.key(), new AverageVelocity(v.getValue2(), v.getValue1())));
 
 
     }
-
-
-
-    @Override
-    protected String getOutputTopic() {
-        return TOPIC;
-    }
-
 
 
     /**
@@ -86,11 +73,5 @@ public class LatestAverageVelocityStreamBuilder extends TableAndStreamBuilder.St
         }
     }
 
-
-    public static class ValueSerde extends SerdePrototype<Pair<Long, Double>> {
-        public ValueSerde() {
-            super(new TupleSerdes.PairSerdes<>());
-        }
-    }
 
 }
