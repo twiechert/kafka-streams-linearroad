@@ -2,6 +2,7 @@ package de.twiechert.linroad.kafka.model;
 
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import org.javatuples.Pair;
+import org.javatuples.Quintet;
 import org.javatuples.Sextet;
 
 import java.io.Serializable;
@@ -18,45 +19,44 @@ public class PositionReport implements Serializable {
         }
 
 
-        public Long getTime(){
-            return getValue0();
-        }
 
-        public Integer getVehicleId(){
-            return getValue1();
-        }
     }
 
 
 
-    public static class Value extends Sextet<Integer, Integer, Integer, Boolean, Integer, Integer>
+    public static class Value extends Quintet<Long, Integer, Integer, Integer, Integer>
     {
-        public Value(Integer value0, Integer value1, Integer value2, Boolean value3, Integer value4, Integer value5) {
-            super(value0, value1, value2, value3, value4, value5);
+
+        public Value(Long time, Integer vehicleId, Integer speed, Integer lane, Integer pos) {
+            super(time, vehicleId, speed, lane, pos);
         }
 
-        public Integer getSpeed(){
+
+        public Long getTime(){
             return getValue0();
         }
 
-        public Integer getXway(){
+
+        public Integer getVehicleId(){
             return getValue1();
         }
 
-        public Integer getLane(){
+
+
+        public Integer getSpeed(){
             return getValue2();
         }
 
-        public Boolean getDir(){
+
+
+        public Integer getLane(){
             return getValue3();
         }
 
-        public Integer getSeg(){
-            return getValue4();
-        }
+
 
         public Integer getPos(){
-            return getValue5();
+            return getValue4();
         }
     }
 

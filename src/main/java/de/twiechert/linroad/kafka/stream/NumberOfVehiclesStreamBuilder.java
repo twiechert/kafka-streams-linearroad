@@ -6,6 +6,7 @@ import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.Windowed;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,14 +31,16 @@ public class NumberOfVehiclesStreamBuilder {
     }
 
 
-    public KStream<XwaySegmentDirection, NumberOfVehicles> getStream(KStream<PositionReport.Key, PositionReport.Value> positionReportStream) {
+    public KStream<XwaySegmentDirection, NumberOfVehicles> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReportStream) {
         logger.debug("Building stream to identify number of vehicles at expressway, segment and direction per minute.");
 
-        return positionReportStream.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(v.getXway(), v.getSeg(), v.getDir()), new Pair<>(v.getSpeed(), k.getTime())))
+        return positionReportStream.mapValues(v -> new Pair<>(v.getSpeed(), v.getTime()))
                 // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
                 .aggregateByKey(() -> new NumberOfVehicles(0l, 0),
                         (key, value, aggregat) -> {
+                         //   return new NumberOfVehicles(Math.max(aggregat.getValue1(), minuteOfReport(value.getValue1())), aggregat.getValue1() + 1);
                             return new NumberOfVehicles(Math.max(aggregat.getValue1(), minuteOfReport(value.getValue1())), aggregat.getValue1() + 1);
+
                         }, TimeWindows.of("NOV-WINDOW", 60), new XwaySegmentDirection.Serde(), new NumberOfVehicles.Serde()).toStream().map((k, v) -> new KeyValue<>(k.key(), v));
 
     }

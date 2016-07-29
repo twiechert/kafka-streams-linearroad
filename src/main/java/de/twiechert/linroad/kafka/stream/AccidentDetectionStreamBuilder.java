@@ -32,7 +32,7 @@ public class AccidentDetectionStreamBuilder {
     public AccidentDetectionStreamBuilder() {
     }
 
-    public KStream<XwaySegmentDirection, Long> getStream(KStream<PositionReport.Key, PositionReport.Value> positionReportStream) {
+    public KStream<XwaySegmentDirection, Long> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReportStream) {
         logger.debug("Building stream to identify accidents");
 
         // an accident at minute m expressway x, segment s, direction d will be mapped to all segments downstream 0..4
@@ -41,8 +41,8 @@ public class AccidentDetectionStreamBuilder {
 
 
         return positionReportStream.filter((k, v) -> v.getSpeed() == 0).map((key, value) -> new KeyValue<>(
-                new Quintet<>(value.getXway(), value.getLane(), value.getDir(), value.getSeg(), value.getPos()),
-                new Pair<>(key.getVehicleId(), Util.minuteOfReport(key.getTime()))))
+                new Quintet<>(key.getXway(), value.getLane(), key.getDir(), key.getSeg(), value.getPos()),
+                new Pair<>(value.getVehicleId(), Util.minuteOfReport(value.getTime()))))
                 // current time to use | if more than one vehicle in window | current count of position reports in window
 
                 .aggregateByKey(() -> new Quartet<>(0l, -1, false, 0),

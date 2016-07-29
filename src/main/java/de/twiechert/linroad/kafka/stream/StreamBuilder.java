@@ -54,24 +54,4 @@ public abstract class StreamBuilder<OutputKey, OutputValue> {
     public abstract String getOutputTopic();
 
 
-    protected Options getOptions() {
-        return new Options(null);
-    }
-
-    protected static class Options {
-        private String fileoutput = null;
-
-        public Options(String fileoutput) {
-            this.fileoutput = fileoutput;
-        }
-
-        public String getFileoutput() {
-            return fileoutput;
-        }
-
-        public void setFileoutput(String fileoutput) {
-            this.fileoutput = fileoutput;
-        }
-
-    }
 }

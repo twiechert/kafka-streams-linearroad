@@ -9,8 +9,8 @@ import java.io.Serializable;
  * Created by tafyun on 29.07.16.
  */
 public class XwaySegmentDirection extends Triplet<Integer, Integer, Boolean> implements Serializable{
-    public XwaySegmentDirection(Integer value0, Integer value1, Boolean value2) {
-        super(value0, value1, value2);
+    public XwaySegmentDirection(Integer xway, Integer seg, Boolean dir) {
+        super(xway, seg, dir);
     }
 
 
@@ -29,6 +29,11 @@ public class XwaySegmentDirection extends Triplet<Integer, Integer, Boolean> imp
 
     public static class Serde extends ByteArraySerde<XwaySegmentDirection> {
     }
+
+    public static class Serializer
+            extends ByteArraySerde.BArraySerializer<XwaySegmentDirection> {
+    }
+
 
 
 }

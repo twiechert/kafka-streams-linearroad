@@ -3,6 +3,7 @@ package de.twiechert.linroad.kafka.stream;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.model.PositionReport;
+import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.javatuples.Pair;
@@ -20,8 +21,8 @@ public class PositionReportStreamBuilder {
     public PositionReportStreamBuilder() {
     }
 
-    public KStream<PositionReport.Key, PositionReport.Value> getStream(KStreamBuilder builder) {
-         return builder.stream(new PositionReport.KeySerde(),
+    public KStream<XwaySegmentDirection, PositionReport.Value> getStream(KStreamBuilder builder) {
+         return builder.stream(new XwaySegmentDirection.Serde(),
                  new PositionReport.ValueSerde(), PositionReportHandler.TOPIC);
     }
 }

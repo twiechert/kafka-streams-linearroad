@@ -99,21 +99,24 @@ public class LinearRoadKafkaBenchmarkApplication {
             // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
             logger.debug("Start feeding of tuples");
             positionReporter.startFeeding();
-            KStream<PositionReport.Key, PositionReport.Value> positionReportStream = positionReportStreamBuilder.getStream(builder);
+            KStream<XwaySegmentDirection, PositionReport.Value> positionReportStream = positionReportStreamBuilder.getStream(builder);
             KStream<XwaySegmentDirection, NumberOfVehicles>  numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
-            //numberOfVehiclesStream.print();
 
             KStream<XwaySegmentDirection, AverageVelocity>  latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
+            //latestAverageVelocityStream.print();
+
+           // new LatestAverageVelocityStreamBuilder2().getStream(positionReportStream).print();
 
             KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
             accidentDetectionStream.print();
 
-            KStream<XwaySegmentDirection, Long> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
+            KStream<String, Quartet<Integer, Long, Long, Integer>> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
             accidentNotificationStream.print();
+            accidentNotificationStream.writeAsText("acc_notifications.csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
 
             accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
 
-            KStream<XwaySegmentDirection, Quartet<Long, Double, Integer, Long>> currentToll = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
+            KStream<XwaySegmentDirection, Double> currentToll = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
             currentToll.print();
 
             currentToll.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
