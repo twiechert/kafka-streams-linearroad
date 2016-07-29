@@ -2,12 +2,10 @@ package de.twiechert.linroad.kafka;
 
 import de.twiechert.linroad.jdriver.DataDriver;
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
+import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.feeder.DataFeeder;
 import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
-import de.twiechert.linroad.kafka.model.AverageVelocity;
-import de.twiechert.linroad.kafka.model.NumberOfVehicles;
-import de.twiechert.linroad.kafka.model.PositionReport;
-import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
+import de.twiechert.linroad.kafka.model.*;
 import de.twiechert.linroad.kafka.stream.*;
 import net.moznion.random.string.RandomStringGenerator;
 import org.apache.kafka.streams.KafkaStreams;
@@ -63,6 +61,8 @@ public class LinearRoadKafkaBenchmarkApplication {
         private final PositionReportStreamBuilder positionReportStreamBuilder;
         private final NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
         private final CurrentTollStreamBuilder currentTollStreamBuilder;
+        private final TollNotificationStreamBuilder tollNotificationStreamBuilder;
+
         private Properties streamConfig = new Properties();
 
 
@@ -74,7 +74,8 @@ public class LinearRoadKafkaBenchmarkApplication {
                                NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder,
                                CurrentTollStreamBuilder currentTollStreamBuilder,
                                AccidentNotificationStreamBuilder accidentNotificationStreamBuilder,
-                               PositionReportStreamBuilder positionReportStreamBuilder) {
+                               PositionReportStreamBuilder positionReportStreamBuilder,
+                               TollNotificationStreamBuilder tollNotificationStreamBuilder) {
             this.context = context;
             this.positionReportStreamBuilder = positionReportStreamBuilder;
             this.positionReporter = positionReporter;
@@ -82,6 +83,7 @@ public class LinearRoadKafkaBenchmarkApplication {
             this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
             this.numberOfVehiclesStreamBuilder = numberOfVehiclesStreamBuilder;
             this.currentTollStreamBuilder = currentTollStreamBuilder;
+            this.tollNotificationStreamBuilder = tollNotificationStreamBuilder;
             this.accidentNotificationStreamBuilder = accidentNotificationStreamBuilder;
             streamConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark-" + this.context.getApplicationId());
             streamConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
@@ -110,16 +112,19 @@ public class LinearRoadKafkaBenchmarkApplication {
             KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
             accidentDetectionStream.print();
 
-            KStream<String, Quartet<Integer, Long, Long, Integer>> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
+            KStream<Void, Quartet<Integer, Long, Long, Integer>> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
             accidentNotificationStream.print();
             accidentNotificationStream.writeAsText("acc_notifications.csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
 
             accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
 
-            KStream<XwaySegmentDirection, Double> currentToll = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
-            currentToll.print();
+            KStream<XwaySegmentDirection, Pair<Double, Double>> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
+            //currentTollStream.print();
 
-            currentToll.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
+            currentTollStream.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
+
+            KStream<VehicleIdXwayDirection, Triplet<Long, Integer, Boolean>> stream = tollNotificationStreamBuilder.getStream(positionReportStream, currentTollStream);
+            stream.print();
 
             KafkaStreams kafkaStreams = new KafkaStreams(builder, streamConfig);
             kafkaStreams.start();
