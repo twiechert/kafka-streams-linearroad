@@ -4,6 +4,7 @@ import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.model.AverageVelocity;
+import de.twiechert.linroad.kafka.model.CurrentToll;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.common.serialization.Serdes;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection, Pair<Double, Double>> {
+public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection, CurrentToll> {
 
     public static final String TOPIC = "CURRENT_TOLL";
 
@@ -36,13 +37,13 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
         super(context,
                 util,
                 new XwaySegmentDirection.Serde(),
-                new TupleSerdes.PairSerdes<>());
+                new CurrentToll.Serde());
     }
 
 
-    public KStream<XwaySegmentDirection, Pair<Double, Double>> getStream(KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream,
-                                                                         KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream,
-                                                                         KStream<XwaySegmentDirection, Long> accidentDetectionStreamBuilder) {
+    public KStream<XwaySegmentDirection, CurrentToll> getStream(KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream,
+                                                                KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream,
+                                                                KStream<XwaySegmentDirection, Long> accidentDetectionStreamBuilder) {
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
 
 
@@ -58,12 +59,12 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                 .mapValues(v -> {
                     // accident --> no toll
                     if (v.getValue3() || v.getValue1() >= 40 || v.getValue2() <= 50)
-                        return new Pair<>(0d, v.getValue1());
+                        return new CurrentToll(v.getValue0(), 0d, v.getValue1());
                     else
-                        return new Pair<>(2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
+                        return new CurrentToll(v.getValue0(), 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
 
 
-                });
+                }).through(TOPIC);
 
     }
 

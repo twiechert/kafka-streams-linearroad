@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.github.twiechert</groupId>
             <artifactId>linearroad-java-driver</artifactId>
-            <version>0c9e62f46b</version>
+            <version>fda4e1a68d</version>
         </dependency>
     </dependencies>
     <repositories>

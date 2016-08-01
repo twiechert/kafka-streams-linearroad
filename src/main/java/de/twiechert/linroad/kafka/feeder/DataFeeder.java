@@ -19,6 +19,15 @@ public class DataFeeder {
 
     private final String filePath;
 
+    @Autowired
+    private PositionReportHandler positionReportHandler;
+
+    @Autowired
+    private DailyExpenditureRequestHandler dailyExpenditureRequestHandler;
+
+    @Autowired
+    private AccountBalanceRequestHandler accountBalanceRequestHandler;
+
     /**
      * This callback processes tuples generated from the native c implementation.
      */
@@ -48,9 +57,9 @@ public class DataFeeder {
 
     @Async
     public void startFeeding() {
-        new TupleReceivedCallback(new PositionReportHandler(),
-                                  new AccountBalanceRequestHandler(),
-                                  new DailyExpenditureRequestHandler());
+        new TupleReceivedCallback(positionReportHandler,
+                dailyExpenditureRequestHandler,
+                accountBalanceRequestHandler);
 
     }
 

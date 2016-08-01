@@ -1,9 +1,12 @@
 package de.twiechert.linroad.kafka.feeder;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.javatuples.Quintet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static de.twiechert.linroad.kafka.core.Util.pInt;
 import static de.twiechert.linroad.kafka.core.Util.pLng;
@@ -13,12 +16,14 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
  *
  * Key corresponds to (Time: t, VID: v, QID: q, XWay: x, Day: n).
  */
+@Component
 public class DailyExpenditureRequestHandler extends TupleHandler<Quintet<Long, Integer, Integer, Integer, Integer>, Void> {
 
     public static final String TOPIC = "DAILYEXP";
 
-    public DailyExpenditureRequestHandler() {
-        super(3);
+    @Autowired
+    public DailyExpenditureRequestHandler(LinearRoadKafkaBenchmarkApplication.Context context) {
+        super(context, 3);
     }
 
     @Override

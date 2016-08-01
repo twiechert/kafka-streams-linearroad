@@ -54,7 +54,7 @@
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.21" level="project" />
     <orderEntry type="library" name="Maven: com.github.twiechert:javatuples:0eedabf611" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.4" level="project" />
-    <orderEntry type="library" name="Maven: com.github.twiechert:linearroad-java-driver:0c9e62f46b" level="project" />
+    <orderEntry type="library" name="Maven: com.github.twiechert:linearroad-java-driver:fda4e1a68d" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jna:jna:4.2.2" level="project" />
   </component>
 </module>

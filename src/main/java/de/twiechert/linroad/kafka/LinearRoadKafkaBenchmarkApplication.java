@@ -8,6 +8,7 @@ import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.model.*;
 import de.twiechert.linroad.kafka.stream.*;
 import net.moznion.random.string.RandomStringGenerator;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Properties;
 
 /**
@@ -53,44 +55,35 @@ public class LinearRoadKafkaBenchmarkApplication {
     @Component
     public static class BenchmarkRunner implements CommandLineRunner {
 
-        private final Context context;
-        private final DataFeeder positionReporter;
-        private final LatestAverageVelocityStreamBuilder latestAverageVelocityStreamBuilder;
-        private final AccidentDetectionStreamBuilder accidentDetectionStreamBuilder;
-        private final AccidentNotificationStreamBuilder accidentNotificationStreamBuilder;
-        private final PositionReportStreamBuilder positionReportStreamBuilder;
-        private final NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
-        private final CurrentTollStreamBuilder currentTollStreamBuilder;
-        private final TollNotificationStreamBuilder tollNotificationStreamBuilder;
-
-        private Properties streamConfig = new Properties();
-
 
         @Autowired
-        public BenchmarkRunner(Context context,
-                               DataFeeder positionReporter,
-                               LatestAverageVelocityStreamBuilder latestAverageVelocityStreamBuilder,
-                               AccidentDetectionStreamBuilder accidentDetectionStreamBuilder,
-                               NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder,
-                               CurrentTollStreamBuilder currentTollStreamBuilder,
-                               AccidentNotificationStreamBuilder accidentNotificationStreamBuilder,
-                               PositionReportStreamBuilder positionReportStreamBuilder,
-                               TollNotificationStreamBuilder tollNotificationStreamBuilder) {
-            this.context = context;
-            this.positionReportStreamBuilder = positionReportStreamBuilder;
-            this.positionReporter = positionReporter;
-            this.latestAverageVelocityStreamBuilder = latestAverageVelocityStreamBuilder;
-            this.accidentDetectionStreamBuilder = accidentDetectionStreamBuilder;
-            this.numberOfVehiclesStreamBuilder = numberOfVehiclesStreamBuilder;
-            this.currentTollStreamBuilder = currentTollStreamBuilder;
-            this.tollNotificationStreamBuilder = tollNotificationStreamBuilder;
-            this.accidentNotificationStreamBuilder = accidentNotificationStreamBuilder;
-            streamConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark-" + this.context.getApplicationId());
-            streamConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
-            streamConfig.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "172.17.0.2:2181");
+        private Context context;
 
-            streamConfig.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, PositionReportHandler.TimeStampExtractor.class.getName());
-        }
+        @Autowired
+        private DataFeeder positionReporter;
+
+        @Autowired
+        private LatestAverageVelocityStreamBuilder latestAverageVelocityStreamBuilder;
+
+        @Autowired
+        private AccidentDetectionStreamBuilder accidentDetectionStreamBuilder;
+
+        @Autowired
+        private AccidentNotificationStreamBuilder accidentNotificationStreamBuilder;
+
+        @Autowired
+        private PositionReportStreamBuilder positionReportStreamBuilder;
+
+        @Autowired
+        private NumberOfVehiclesStreamBuilder numberOfVehiclesStreamBuilder;
+
+        @Autowired
+        private CurrentTollStreamBuilder currentTollStreamBuilder;
+
+        @Autowired
+        private TollNotificationStreamBuilder tollNotificationStreamBuilder;
+
+
 
         @Override
         public void run(String... var1) throws Exception {
@@ -118,15 +111,15 @@ public class LinearRoadKafkaBenchmarkApplication {
 
             accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
 
-            KStream<XwaySegmentDirection, Pair<Double, Double>> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
+            KStream<XwaySegmentDirection, CurrentToll> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
             //currentTollStream.print();
 
             currentTollStream.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
 
-            KStream<VehicleIdXwayDirection, Triplet<Long, Integer, Boolean>> stream = tollNotificationStreamBuilder.getStream(positionReportStream, currentTollStream);
+            KStream<Void, TollNotification> stream = tollNotificationStreamBuilder.getStream(positionReportStream, currentTollStream);
             stream.print();
 
-            KafkaStreams kafkaStreams = new KafkaStreams(builder, streamConfig);
+            KafkaStreams kafkaStreams = new KafkaStreams(builder, context.getStreamBaseConfig());
             kafkaStreams.start();
         }
     }
@@ -136,19 +129,49 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         private final RandomStringGenerator generator = new RandomStringGenerator();
 
+        private Properties streamBaseConfig = new Properties();
+
+        private Properties producerBaseConfig = new Properties();
+
 
         @Value("${linearroad.data.path}")
         private String filePath;
 
         @Value("${linearroad.kafka.bootstrapservers}")
-        private String bootstrapservers;
+        private String bootstrapServers;
 
+        @Value("${linearroad.zookeeper.server}")
+        private String zookeeperServer;
 
         private String applicationId = generator.generateByRegex("[0-9a-z]{3}");
         private DateTime benchmarkStartedAt = null; //  DateTime.now();
 
         public Context() {
+        }
 
+        @PostConstruct
+        private void initializeBaseConfig() {
+            logger.debug("Configured kafka servers are {} and zookeeper {}", bootstrapServers, zookeeperServer);
+
+            streamBaseConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark-" + this.getApplicationId());
+            streamBaseConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+            streamBaseConfig.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, zookeeperServer);
+            streamBaseConfig.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, PositionReportHandler.TimeStampExtractor.class.getName());
+
+            producerBaseConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+            producerBaseConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+            producerBaseConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
+            producerBaseConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+            producerBaseConfig.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+            producerBaseConfig.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+        }
+
+        public Properties getStreamBaseConfig() {
+            return streamBaseConfig;
+        }
+
+        public Properties getProducerBaseConfig() {
+            return producerBaseConfig;
         }
 
         public int getCurrentRuntimeInSeconds() {
@@ -180,7 +203,7 @@ public class LinearRoadKafkaBenchmarkApplication {
     @Bean
     public DataDriver getDataDriver(Context context) {
         logger.debug("Path to file is {}", context.getFilePath());
-        return new DataDriver(context.getFilePath());
+        return new DataDriver(context.getFilePath(), DataDriver.Architecture.X64_LINUX);
     }
 
 

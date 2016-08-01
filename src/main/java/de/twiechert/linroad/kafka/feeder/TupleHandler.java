@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.feeder;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -18,19 +19,12 @@ public abstract class TupleHandler<Outputkey, OutputValue> {
     private final int handleOn;
     private Producer<Outputkey, OutputValue> producer;
     private Properties producerConfig = new Properties();
+    private LinearRoadKafkaBenchmarkApplication.Context context;
 
-    {
-        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092");
-        producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-        producerConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-        producerConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
-        producerConfig.put(ProducerConfig.LINGER_MS_CONFIG, 1);
-        producerConfig.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
 
-    }
-
-    public TupleHandler(int handleOn) {
+    public TupleHandler(LinearRoadKafkaBenchmarkApplication.Context context, int handleOn) {
         this.handleOn = handleOn;
+        this.context = context;
         this.producer = new KafkaProducer<>(this.mergeProperties());
 
     }
@@ -58,6 +52,7 @@ public abstract class TupleHandler<Outputkey, OutputValue> {
     }
 
     private Properties mergeProperties() {
+        this.producerConfig.putAll(context.getProducerBaseConfig());
         this.producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, this.getKeySerializerClass().getName());
         this.producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, this.getValueSerializerClass().getName());
         return this.producerConfig;

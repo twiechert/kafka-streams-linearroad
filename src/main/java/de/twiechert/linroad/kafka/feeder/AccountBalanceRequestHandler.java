@@ -1,9 +1,12 @@
 package de.twiechert.linroad.kafka.feeder;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.javatuples.Triplet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static de.twiechert.linroad.kafka.core.Util.pInt;
 import static de.twiechert.linroad.kafka.core.Util.pLng;
@@ -13,13 +16,15 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
  *
  * Key corresponds to (Time: t, VID: v, QID: q).
  */
+@Component
 public class AccountBalanceRequestHandler extends TupleHandler<Triplet<Long, Integer, Integer>, Void> {
 
     public static final String TOPIC = "BALANCE";
 
 
-    public AccountBalanceRequestHandler() {
-        super(2);
+    @Autowired
+    public AccountBalanceRequestHandler(LinearRoadKafkaBenchmarkApplication.Context context) {
+        super(context, 2);
     }
 
     @Override

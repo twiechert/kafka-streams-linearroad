@@ -1,10 +1,13 @@
 package de.twiechert.linroad.kafka.feeder;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.javatuples.Octet;
 import org.javatuples.Quintet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static de.twiechert.linroad.kafka.core.Util.pInt;
 import static de.twiechert.linroad.kafka.core.Util.pLng;
@@ -13,14 +16,15 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
  * Created by tafyun on 22.07.16.
 * key corresponds to (Time: t, VID: v, QID: q, XWay: x, Sinit: i, Send: e, DOW: d, TOD: y)
  */
-
+@Component
 public class TravelEstimationRequestHandler extends TupleHandler<Octet<Long, Integer, Integer, Integer, Integer, Integer, Integer, Integer>, Void> {
 
     public static final String TOPIC = "TRAVELEST";
 
 
-    public TravelEstimationRequestHandler() {
-        super(4);
+    @Autowired
+    public TravelEstimationRequestHandler(LinearRoadKafkaBenchmarkApplication.Context context) {
+        super(context, 4);
     }
 
     @Override
