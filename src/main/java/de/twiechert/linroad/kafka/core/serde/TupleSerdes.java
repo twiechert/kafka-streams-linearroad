@@ -3,6 +3,9 @@ import org.javatuples.*;
 
 import org.apache.kafka.common.serialization.Deserializer;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by tafyun on 10.07.16.
  */
@@ -43,6 +46,14 @@ public class TupleSerdes {
 
 
     }
+
+
+    public static class HashSetSerde<A> extends ByteArraySerde<HashSet<A>> {
+
+
+    }
+
+
 
 
 }

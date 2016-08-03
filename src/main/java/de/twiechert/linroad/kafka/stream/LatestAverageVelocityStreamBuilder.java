@@ -24,7 +24,6 @@ import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
 
 /**
  * This class builds the stream of latest average velocities keyed by (expressway, segment, direction).
- *
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
@@ -46,7 +45,7 @@ public class LatestAverageVelocityStreamBuilder {
                         .aggregateByKey(() -> new Triplet<>(0, 0d, 0l),
                                 (key, value, aggregat) -> {
                                     int n = aggregat.getValue0() + 1;
-                                    return new Triplet<>(n, aggregat.getValue1() * (((double) n - 1) / n) + (double) value.getValue0() / n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1()) + 1));
+                                    return new Triplet<>(n, aggregat.getValue1() * (((double) n - 1) / n) + (double) value.getValue0() / n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1())));
                                 }, TimeWindows.of("LAV_WINDOW", 5 * 60).advanceBy(60), new XwaySegmentDirection.Serde(), new TupleSerdes.TripletSerdes<>())
                         .toStream().map((k, v) -> new KeyValue<>(k.key(), new AverageVelocity(v.getValue2(), v.getValue1())));
 

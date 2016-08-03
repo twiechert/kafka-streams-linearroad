@@ -129,7 +129,7 @@ public class LinearRoadKafkaBenchmarkApplication {
              * Building NOV stream
              */
             KStream<XwaySegmentDirection, NumberOfVehicles>  numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
-            //numberOfVehiclesStream.print();
+            numberOfVehiclesStream.print();
 
             /**
              * Building LAV stream
@@ -142,13 +142,13 @@ public class LinearRoadKafkaBenchmarkApplication {
              * Building Accident detection stream
              */
             KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
-            accidentDetectionStream.print();
+            //accidentDetectionStream.print();
 
             /**
              * Building Accident notification stream
              */
             KStream<Void, AccidentNotification> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
-            accidentNotificationStream.print();
+            // accidentNotificationStream.print();
             accidentNotificationStream.writeAsText(accidentNotificationStreamBuilder.getOutputTopic() + ".csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
             //accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
 
@@ -156,7 +156,9 @@ public class LinearRoadKafkaBenchmarkApplication {
              * Building current toll per Xway-Segmen-Directon tuple stream
              */
             KStream<XwaySegmentDirection, CurrentToll> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
-            //currentTollStream.print();
+            //    currentTollStream
+            //.filter((k,v) -> v.getToll() > 0)
+            //   .print();
             //currentTollStream.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
 
             /**
@@ -179,14 +181,14 @@ public class LinearRoadKafkaBenchmarkApplication {
              */
             KStream<Void, AccountBalanceResponse> accountBalanceResponseStream = accountBalanceResponseStreamBuilder.getStream(accountBalanceRequestStream, tollPerVehicleTable);
             accountBalanceResponseStream.writeAsText(accountBalanceResponseStreamBuilder.getOutputTopic() + ".csv", accountBalanceResponseStreamBuilder.getKeySerde(), accountBalanceResponseStreamBuilder.getValueSerde());
-            accountBalanceResponseStream.print();
+            // accountBalanceResponseStream.print();
 
             /**
              * Building stream to answer daily expenditure requests
              */
             KStream<Void, DailyExpenditureResponse> dailyExpenditureResponseStream = dailyExpenditureResponseStreamBuilder.getStream(dailyExpenditureRequestStream, tollPerXwayVehicleDayTable);
             dailyExpenditureResponseStream.writeAsText(dailyExpenditureResponseStreamBuilder.getOutputTopic() + ".csv", dailyExpenditureResponseStreamBuilder.getKeySerde(), dailyExpenditureResponseStreamBuilder.getValueSerde());
-            dailyExpenditureResponseStream.print();
+            // dailyExpenditureResponseStream.print();
 
 
             KafkaStreams kafkaStreams = new KafkaStreams(builder, context.getStreamBaseConfig());

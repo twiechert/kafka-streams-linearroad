@@ -58,7 +58,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
        return  accidentReports.through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_DET_NOT")
                .join(positionReports, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("ACC-NOT-WINDOW").before(60),
                         new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), new PositionReport.ValueSerde())
-               .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), v.getValue1(), k.getSeg())));
+               .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), context.getCurrentRuntimeInSeconds(), k.getSeg())));
 
     }
 

@@ -19,13 +19,15 @@ public class XwaySegmentDirection extends Triplet<Integer, Integer, Boolean> imp
         return getValue0();
     }
 
-    public Boolean getDir(){
-        return getValue2();
-    }
 
     public Integer getSeg(){
         return getValue1();
     }
+
+    public Boolean getDir() {
+        return getValue2();
+    }
+
 
     public static class Serde extends ByteArraySerde<XwaySegmentDirection> {
     }

@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.stream;
 
+import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
@@ -12,12 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
 
 
 /**
  * This class builds the number of vehicles that per (expressway, segment, direction) tuple.
- *
+ * The tuples that are output corresspond to minute m+1...
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
@@ -34,15 +38,15 @@ public class NumberOfVehiclesStreamBuilder {
     public KStream<XwaySegmentDirection, NumberOfVehicles> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReportStream) {
         logger.debug("Building stream to identify number of vehicles at expressway, segment and direction per minute.");
 
-        return positionReportStream.mapValues(v -> new Pair<>(v.getSpeed(), v.getTime()))
+        return positionReportStream.mapValues(v -> new Pair<>(v.getVehicleId(), v.getTime()))
                 // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
-                .aggregateByKey(() -> new NumberOfVehicles(0l, 0),
-                        (key, value, aggregat) -> {
-                            //   return new NumberOfVehicles(Math.max(aggregat.getValue1(), minuteOfReport(value.getValue1())), aggregat.getValue1() + 1);
-                            return new NumberOfVehicles(minuteOfReport(value.getValue1()), aggregat.getValue1() + 1);
+                .aggregateByKey(() -> new Pair<>(0l, new HashSet<Integer>()), (key, value, agg) -> {
+                    //  aggregat.getValue1() + 1
+                    agg.getValue1().add(value.getValue0());
+                    return new Pair<>(minuteOfReport(value.getValue1() + 1), agg.getValue1());
 
-                        }, TimeWindows.of("NOV-WINDOW", 5), new XwaySegmentDirection.Serde(), new NumberOfVehicles.Serde()).toStream().map((k, v) -> new KeyValue<>(k.key(), v))
-                .filter((k, v) -> v.getNumber() > 40);
+                }, TimeWindows.of("NOV-WINDOW", 60), new XwaySegmentDirection.Serde(), new TupleSerdes.PairSerdes<>())
+                .toStream().map((k, v) -> new KeyValue<>(k.key(), new NumberOfVehicles(v.getValue0(), v.getValue1().size())));
 
     }
 

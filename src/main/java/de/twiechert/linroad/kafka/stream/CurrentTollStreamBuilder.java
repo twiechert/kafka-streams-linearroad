@@ -43,18 +43,18 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
 
     public KStream<XwaySegmentDirection, CurrentToll> getStream(KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream,
                                                                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream,
-                                                                KStream<XwaySegmentDirection, Long> accidentDetectionStreamBuilder) {
+                                                                KStream<XwaySegmentDirection, Long> accidentDetectionStream) {
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
 
 
         return latestAverageVelocityStream.through(new XwaySegmentDirection.Serde(), new AverageVelocity.Serde(), "LAV_TOLL")
                 .join(numberOfVehiclesStream.through(new XwaySegmentDirection.Serde(), new NumberOfVehicles.Serde(), "NOV_TOLL"),
                         (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
-                        JoinWindows.of("LAV-NOV-WINDOW").before(2), new XwaySegmentDirection.Serde(), new AverageVelocity.Serde(), new NumberOfVehicles.Serde())
+                        JoinWindows.of("LAV-NOV-WINDOW"), new XwaySegmentDirection.Serde(), new AverageVelocity.Serde(), new NumberOfVehicles.Serde())
 
-                .leftJoin(accidentDetectionStreamBuilder.through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_TOLL"),
+                .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1).through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_TOLL"),
                         (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 != null),
-                        JoinWindows.of("LAV-NOV-ACC-WINDOW").before(1),
+                        JoinWindows.of("LAV-NOV-ACC-WINDOW"),
                         new XwaySegmentDirection.Serde(), new Serdes.LongSerde())
                 .mapValues(v -> {
                     // accident --> no toll
