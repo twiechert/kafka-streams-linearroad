@@ -64,7 +64,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         return new CurrentToll(v.getValue0(), 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
 
 
-                }).through(TOPIC);
+                });
 
     }
 

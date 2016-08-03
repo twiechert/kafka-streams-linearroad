@@ -38,10 +38,11 @@ public class NumberOfVehiclesStreamBuilder {
                 // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
                 .aggregateByKey(() -> new NumberOfVehicles(0l, 0),
                         (key, value, aggregat) -> {
-                         //   return new NumberOfVehicles(Math.max(aggregat.getValue1(), minuteOfReport(value.getValue1())), aggregat.getValue1() + 1);
-                            return new NumberOfVehicles(Math.max(aggregat.getValue1(), minuteOfReport(value.getValue1())), aggregat.getValue1() + 1);
+                            //   return new NumberOfVehicles(Math.max(aggregat.getValue1(), minuteOfReport(value.getValue1())), aggregat.getValue1() + 1);
+                            return new NumberOfVehicles(minuteOfReport(value.getValue1()), aggregat.getValue1() + 1);
 
-                        }, TimeWindows.of("NOV-WINDOW", 60), new XwaySegmentDirection.Serde(), new NumberOfVehicles.Serde()).toStream().map((k, v) -> new KeyValue<>(k.key(), v));
+                        }, TimeWindows.of("NOV-WINDOW", 5), new XwaySegmentDirection.Serde(), new NumberOfVehicles.Serde()).toStream().map((k, v) -> new KeyValue<>(k.key(), v))
+                .filter((k, v) -> v.getNumber() > 40);
 
     }
 

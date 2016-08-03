@@ -28,6 +28,10 @@ public class DataFeeder {
     @Autowired
     private AccountBalanceRequestHandler accountBalanceRequestHandler;
 
+    @Autowired
+    private LinearRoadKafkaBenchmarkApplication.Context context;
+
+
     /**
      * This callback processes tuples generated from the native c implementation.
      */
@@ -35,14 +39,21 @@ public class DataFeeder {
 
 
         private TupleHandler[] tupleHandlers;
+        private LinearRoadKafkaBenchmarkApplication.Context context;
+        private boolean firstArived = false;
 
-        public TupleReceivedCallback(TupleHandler... tupleHandlers) {
+        public TupleReceivedCallback(LinearRoadKafkaBenchmarkApplication.Context context, TupleHandler... tupleHandlers) {
             this.tupleHandlers = tupleHandlers;
+            this.context = context;
             DataFeeder.this.dataDriverLibrary.startProgram(filePath, this);
             Arrays.stream(this.tupleHandlers).forEach(tupleHandler -> tupleHandler.close());
         }
 
         public void invoke(String s) {
+            if (!firstArived) {
+                this.context.markAsStarted();
+                firstArived = true;
+            }
             String[] tuple = s.split(",");
             Arrays.stream(this.tupleHandlers).forEach(tupleHandler -> tupleHandler.handle(tuple));
         }
@@ -57,7 +68,7 @@ public class DataFeeder {
 
     @Async
     public void startFeeding() {
-        new TupleReceivedCallback(positionReportHandler,
+        new TupleReceivedCallback(context, positionReportHandler,
                 dailyExpenditureRequestHandler,
                 accountBalanceRequestHandler);
 

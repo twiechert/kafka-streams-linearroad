@@ -28,5 +28,10 @@ public class CurrentToll extends Triplet<Long, Double, Double> {
     public static class Serde extends ByteArraySerde<CurrentToll> {
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + " -> " + super.toString();
+    }
+
 
 }

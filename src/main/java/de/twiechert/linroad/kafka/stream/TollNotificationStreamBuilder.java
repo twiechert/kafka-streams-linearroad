@@ -54,11 +54,16 @@ public class TollNotificationStreamBuilder extends StreamBuilder<Void, TollNotif
                 .filter((k, v) -> v.getValue2()).mapValues(v -> new Pair<>(v.getValue0(), v.getValue1()));
 
         // has to be remapped to be joinable with current toll stream
-        return consecutivePositionReports.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getValue1(), k.getDir()), new Pair<>(Util.minuteOfReport(v.getValue0()), k.getVehicleId())))
+        // in order to join, we map the time to minutes (tolls are based on the current minute)
+        // but we must preserve the actul timestamp, because it has to be emitted
+        KStream<Void, TollNotification> cons_pos = consecutivePositionReports.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getValue1(), k.getDir()), new Triplet<>(Util.minuteOfReport(v.getValue0()), v.getValue0(), k.getVehicleId())))
                 // join with current toll stream, create VID, time, current time, speed , toll
-                .through(new XwaySegmentDirection.Serde(), new TupleSerdes.PairSerdes<>(), "CONS_POS")
-                .join(currentTollStream, (psRep, currentToll) -> new TollNotification(psRep.getValue1(), psRep.getValue0(), psRep.getValue0(), currentToll.getVelocity(), currentToll.getToll()),
-                        JoinWindows.of("POS-TOLLN_WINDOW")).map((k, v) -> new KeyValue<>(new Void(), v));
+                .through(new XwaySegmentDirection.Serde(), new TupleSerdes.TripletSerdes<>(), "CONS_POS")
+                .join(currentTollStream, (psRep, currToll) -> new TollNotification(psRep.getValue2(), psRep.getValue1(), context.getCurrentRuntimeInSeconds(), currToll.getVelocity(), currToll.getToll()),
+                        JoinWindows.of("POS-TOLLN_WINDOW"), new XwaySegmentDirection.Serde(), new TupleSerdes.TripletSerdes<>(), new CurrentToll.Serde()).map((k, v) -> new KeyValue<>(new Void(), v.setXway(k.getXway())))
+                .filter((k, v) -> v.getToll() > 0);
+
+        return cons_pos;
 
 
     }

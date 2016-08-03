@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.github.twiechert</groupId>
             <artifactId>javatuples</artifactId>
-            <version>0eedabf611</version>
+            <version>89cc199457</version>
         </dependency>
         <!--  <dependency>
             <groupId>org.javatuples</groupId>

@@ -23,7 +23,10 @@ public class AverageVelocity extends Pair<Long, Double> implements Serializable 
         return getValue1();
     }
 
-
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + " -> " + super.toString();
+    }
     public static class Serde extends ByteArraySerde<AverageVelocity> {
     }
 }

@@ -3,6 +3,7 @@ package de.twiechert.linroad.kafka.feeder;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
+import de.twiechert.linroad.kafka.model.historical.DailyExpenditureRequest;
 import org.apache.kafka.common.serialization.Serializer;
 import org.javatuples.Quintet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
  * Key corresponds to (Time: t, VID: v, QID: q, XWay: x, Day: n).
  */
 @Component
-public class DailyExpenditureRequestHandler extends TupleHandler<Quintet<Long, Integer, Integer, Integer, Integer>, Void> {
+public class DailyExpenditureRequestHandler extends TupleHandler<DailyExpenditureRequest, Void> {
 
     public static final String TOPIC = "DAILYEXP";
 
@@ -27,8 +28,8 @@ public class DailyExpenditureRequestHandler extends TupleHandler<Quintet<Long, I
     }
 
     @Override
-    protected Quintet<Long, Integer, Integer, Integer, Integer> transformKey(String[] tuple) {
-        return new Quintet<>(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]), pInt(tuple[4]), pInt(tuple[5]));
+    protected DailyExpenditureRequest transformKey(String[] tuple) {
+        return new DailyExpenditureRequest(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]), pInt(tuple[4]), pInt(tuple[5]));
     }
 
     @Override
@@ -37,8 +38,8 @@ public class DailyExpenditureRequestHandler extends TupleHandler<Quintet<Long, I
     }
 
     @Override
-    protected Class<? extends Serializer<Quintet<Long, Integer, Integer, Integer, Integer>>> getKeySerializerClass() {
-        return KeySerializer.class;
+    protected Class<? extends Serializer<DailyExpenditureRequest>> getKeySerializerClass() {
+        return DailyExpenditureRequest.Serializer.class;
     }
 
     @Override
@@ -51,6 +52,5 @@ public class DailyExpenditureRequestHandler extends TupleHandler<Quintet<Long, I
         return TOPIC;
     }
 
-    public static class KeySerializer extends ByteArraySerde.BArraySerializer<Quintet<Long, Integer, Integer, Integer, Integer>> {}
 
 }

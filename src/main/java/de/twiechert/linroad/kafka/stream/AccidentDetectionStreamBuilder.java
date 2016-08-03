@@ -1,6 +1,5 @@
 package de.twiechert.linroad.kafka.stream;
 
-import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.model.PositionReport;
@@ -42,22 +41,24 @@ public class AccidentDetectionStreamBuilder {
 
         return positionReportStream.filter((k, v) -> v.getSpeed() == 0).map((key, value) -> new KeyValue<>(
                 new Quintet<>(key.getXway(), value.getLane(), key.getDir(), key.getSeg(), value.getPos()),
-                new Pair<>(value.getVehicleId(), Util.minuteOfReport(value.getTime()))))
+                new Pair<>(value.getTime(), value.getVehicleId())))
                 // current time to use | if more than one vehicle in window | current count of position reports in window
 
                 .aggregateByKey(() -> new Quartet<>(0l, -1, false, 0),
                         (key, value, aggregat) -> {
 
-                            long time = value.getValue1() > aggregat.getValue0() ? value.getValue1() : aggregat.getValue0();
+                            long time = value.getValue0() > aggregat.getValue0() ? value.getValue0() : aggregat.getValue0();
                             // indicates if there are multiple cars in the considered window
                             boolean multiple = aggregat.getValue2() ||
-                                    (aggregat.getValue1() != -1 && (!aggregat.getValue1().equals(key.getValue0())));
-                            return new Quartet<>(time, value.getValue0(), multiple, aggregat.getValue3() + 1);
+                                    (aggregat.getValue1() != -1 && (!aggregat.getValue1().equals(value.getValue1())));
+                            return new Quartet<>(time, value.getValue1(), multiple, aggregat.getValue3() + 1);
                         }
                         , TimeWindows.of("ACC-DET-WINDOW", 4 * 30).advanceBy(30), new TupleSerdes.QuintetSerdes<>(), new TupleSerdes.QuartetSerdes<>()).toStream()
                 .filter((k, v) -> v.getValue2() && v.getValue3() >= 8)
                 // key -> xway, segment, direction | value -> minute in which accident has been detected
-                .flatMap((key0, value0) -> IntStream.of(4).mapToObj(in -> new KeyValue<>(new XwaySegmentDirection(key0.key().getValue0(), key0.key().getValue3() - in, key0.key().getValue2()), value0.getValue0())).collect(Collectors.toList()));
+                .flatMap((key0, value0) ->
+                        IntStream.of(4).mapToObj(in -> new KeyValue<>(new XwaySegmentDirection(key0.key().getValue0(), ((key0.key().getValue3() - in) < 0) ? 0 : key0.key().getValue3() - in, key0.key().getValue2()),
+                                value0.getValue0())).collect(Collectors.toList()));
 
 
     }

@@ -1,8 +1,11 @@
 package de.twiechert.linroad.kafka.core;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
+import org.joda.time.Seconds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tafyun on 01.06.16.
@@ -20,6 +23,11 @@ public class Util {
     public static long minuteOfReport(long timestamp) {
         return (timestamp/60)+1;
     }
+
+    public static int dayOfReport(long timestamp) {
+        return Seconds.seconds((int) timestamp).toStandardDays().getDays();
+    }
+
 
     public static String str(Object ob) {
         return ob.toString();

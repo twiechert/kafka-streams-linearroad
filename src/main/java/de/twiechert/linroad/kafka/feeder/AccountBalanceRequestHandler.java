@@ -3,8 +3,8 @@ package de.twiechert.linroad.kafka.feeder;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
+import de.twiechert.linroad.kafka.model.historical.AccountBalanceRequest;
 import org.apache.kafka.common.serialization.Serializer;
-import org.javatuples.Triplet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,7 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
  * Key corresponds to (Time: t, VID: v, QID: q).
  */
 @Component
-public class AccountBalanceRequestHandler extends TupleHandler<Triplet<Long, Integer, Integer>, Void> {
+public class AccountBalanceRequestHandler extends TupleHandler<AccountBalanceRequest, Void> {
 
     public static final String TOPIC = "BALANCE";
 
@@ -28,8 +28,8 @@ public class AccountBalanceRequestHandler extends TupleHandler<Triplet<Long, Int
     }
 
     @Override
-    protected Triplet<Long, Integer, Integer> transformKey(String[] tuple) {
-        return new Triplet<>(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]));
+    protected AccountBalanceRequest transformKey(String[] tuple) {
+        return new AccountBalanceRequest(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]));
     }
 
     @Override
@@ -38,8 +38,8 @@ public class AccountBalanceRequestHandler extends TupleHandler<Triplet<Long, Int
     }
 
     @Override
-    protected Class<? extends Serializer<Triplet<Long, Integer, Integer>>> getKeySerializerClass() {
-        return KeySerializer.class;
+    protected Class<? extends Serializer<AccountBalanceRequest>> getKeySerializerClass() {
+        return AccountBalanceRequest.Serializer.class;
     }
 
     @Override
@@ -52,7 +52,6 @@ public class AccountBalanceRequestHandler extends TupleHandler<Triplet<Long, Int
         return TOPIC;
     }
 
-    public static class KeySerializer extends ByteArraySerde.BArraySerializer<Triplet<Long, Integer, Integer>> {}
 
     public static class ValueSerializer extends ByteArraySerde.BArraySerializer<Void> {}
 }

@@ -5,6 +5,7 @@ import de.twiechert.linroad.kafka.core.FallbackTimestampExtractor;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
+import de.twiechert.linroad.kafka.model.AccidentNotification;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -28,7 +29,7 @@ import org.springframework.stereotype.Component;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Quartet<Integer, Long, Long, Integer>> {
+public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, AccidentNotification> {
 
     private static final String TOPIC = "ACC_NOT";
 
@@ -38,11 +39,11 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Quart
 
     @Autowired
     public AccidentNotificationStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util, new Void.Serde(), new TupleSerdes.QuartetSerdes<>());
+        super(context, util, new Void.Serde(), new AccidentNotification.Serde());
     }
 
-    public KStream<Void, Quartet<Integer, Long, Long, Integer>> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReports,
-                                                                          KStream<XwaySegmentDirection, Long> accidentReports) {
+    public KStream<Void, AccidentNotification> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReports,
+                                                         KStream<XwaySegmentDirection, Long> accidentReports) {
         logger.debug("Building stream to notify drivers about accidents");
 
         /**
@@ -55,9 +56,9 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Quart
         // **no** earlier than the minute following them inutew hen the accident occurred.
         // i.e. the accident detection must be "before" up to one second
        return  accidentReports.through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_DET_NOT")
-                .join(positionReports, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("ACC-NOT-WINDOW").before(1),
+               .join(positionReports, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("ACC-NOT-WINDOW").before(60),
                         new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), new PositionReport.ValueSerde())
-               .map((k, v) -> new KeyValue<>(new Void(), new Quartet<>(1, v.getValue0(), v.getValue1(), k.getValue1())));
+               .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), v.getValue1(), k.getSeg())));
 
     }
 

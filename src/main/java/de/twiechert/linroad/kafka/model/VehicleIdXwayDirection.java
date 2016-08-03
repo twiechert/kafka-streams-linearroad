@@ -33,6 +33,10 @@ public class VehicleIdXwayDirection extends Triplet<Integer, Integer, Boolean> i
         return getValue2();
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + " -> " + super.toString();
+    }
 
     public static class Serde extends ByteArraySerde<VehicleIdXwayDirection> {
     }

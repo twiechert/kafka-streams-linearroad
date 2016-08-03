@@ -34,6 +34,9 @@ public class XwaySegmentDirection extends Triplet<Integer, Integer, Boolean> imp
             extends ByteArraySerde.BArraySerializer<XwaySegmentDirection> {
     }
 
-
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + " -> " + super.toString();
+    }
 
 }
