@@ -1,6 +1,8 @@
 package de.twiechert.linroad.kafka.stream;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
+import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.model.AverageVelocity;
@@ -33,11 +35,14 @@ public class LatestAverageVelocityStreamBuilder {
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(LatestAverageVelocityStreamBuilder.class);
 
+    private Class<Triplet<Integer, Double, Long>> ImCl = Util.convert(new TypeReference<Triplet<Integer, Double, Long>>() {
+    });
+
     public LatestAverageVelocityStreamBuilder() {
     }
 
 
-    public KStream<XwaySegmentDirection, AverageVelocity> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReportStream) {
+    public KStream<XwaySegmentDirection, AverageVelocity> getStream(KStream<XwaySegmentDirection, PositionReport> positionReportStream) {
         logger.debug("Building stream to identify latest average velocity");
 
         return positionReportStream.mapValues(v ->new Pair<>(v.getSpeed(), v.getTime()))
@@ -46,7 +51,7 @@ public class LatestAverageVelocityStreamBuilder {
                                 (key, value, aggregat) -> {
                                     int n = aggregat.getValue0() + 1;
                                     return new Triplet<>(n, aggregat.getValue1() * (((double) n - 1) / n) + (double) value.getValue0() / n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1())));
-                                }, TimeWindows.of("LAV_WINDOW", 5 * 60).advanceBy(60), new XwaySegmentDirection.Serde(), new TupleSerdes.TripletSerdes<>())
+                                }, TimeWindows.of("LAV_WINDOW", 5 * 60).advanceBy(60), new XwaySegmentDirection.Serde(), new TupleSerdes.TripletSerdes<>(ImCl))
                         .toStream().map((k, v) -> new KeyValue<>(k.key(), new AverageVelocity(v.getValue2(), v.getValue1())));
 
 

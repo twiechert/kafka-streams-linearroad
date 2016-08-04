@@ -44,7 +44,7 @@ public class DailyExpenditureRequestHandler extends TupleHandler<DailyExpenditur
 
     @Override
     protected Class<? extends Serializer<Void>> getValueSerializerClass() {
-        return AccountBalanceRequestHandler.ValueSerializer.class;
+        return Void.Serializer.class;
     }
 
     @Override

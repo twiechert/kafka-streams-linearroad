@@ -16,11 +16,17 @@ import static de.twiechert.linroad.kafka.core.Util.pInt;
  */
 public abstract class TupleHandler<Outputkey, OutputValue> {
 
-    private final int handleOn;
+    private int handleOn = -1;
     private Producer<Outputkey, OutputValue> producer;
     private Properties producerConfig = new Properties();
     private LinearRoadKafkaBenchmarkApplication.Context context;
 
+
+    public TupleHandler(LinearRoadKafkaBenchmarkApplication.Context context) {
+        this.context = context;
+        this.producer = new KafkaProducer<>(this.mergeProperties());
+
+    }
 
     public TupleHandler(LinearRoadKafkaBenchmarkApplication.Context context, int handleOn) {
         this.handleOn = handleOn;
@@ -30,8 +36,8 @@ public abstract class TupleHandler<Outputkey, OutputValue> {
     }
 
     public boolean handle(String[] tuple) {
-        if(pInt(tuple[0]) == handleOn) {
-            producer.send(new ProducerRecord<Outputkey, OutputValue>(this.getTopic(), this.transformKey(tuple), this.transformValue(tuple)));
+        if (handleOn == -1 || pInt(tuple[0]) == handleOn) {
+            producer.send(new ProducerRecord<>(this.getTopic(), this.transformKey(tuple), this.transformValue(tuple)));
             return true;
         }
         return false;

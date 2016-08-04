@@ -2,6 +2,9 @@ package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
+import de.twiechert.linroad.kafka.feeder.historical.HistoricalDataFeeder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -14,6 +17,9 @@ import java.util.Arrays;
 @Component
 public class DataFeeder {
 
+
+    private final static Logger logger = (Logger) LoggerFactory
+            .getLogger(DataFeeder.class);
 
     private final DataDriverLibrary dataDriverLibrary;
 
@@ -67,6 +73,13 @@ public class DataFeeder {
     }
 
     @Async
+    public void startFeedingAsync() {
+        new TupleReceivedCallback(context, positionReportHandler,
+                dailyExpenditureRequestHandler,
+                accountBalanceRequestHandler);
+
+    }
+
     public void startFeeding() {
         new TupleReceivedCallback(context, positionReportHandler,
                 dailyExpenditureRequestHandler,

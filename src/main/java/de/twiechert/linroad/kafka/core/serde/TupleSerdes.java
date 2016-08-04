@@ -15,43 +15,48 @@ public class TupleSerdes {
     // Producer< Pair<Integer, Integer> ,  Sextet<Integer, Integer, Integer, Boolean, Integer, Integer>>
 
 
-    public static class PairSerdes<A, B> extends ByteArraySerde<Pair<A,B>> {
+    public static class PairSerdes<A, B> extends DefaultSerde<Pair<A, B>> {
 
-
+        public PairSerdes(Class<Pair<A, B>> classOb) {
+            super(classOb);
+        }
     }
 
-    public static class TripletSerdes<A,B,C> extends ByteArraySerde<Triplet<A,B,C>> {
-
-
+    public static class TripletSerdes<A, B, C> extends DefaultSerde<Triplet<A, B, C>> {
+        public TripletSerdes(Class<Triplet<A, B, C>> classOb) {
+            super(classOb);
+        }
     }
 
-    public static class QuartetSerdes<A, B, C, D>  extends ByteArraySerde<Quartet<A, B, C, D>> {
+    public static class QuartetSerdes<A, B, C, D> extends DefaultSerde<Quartet<A, B, C, D>> {
 
-
-    }
-
-
-    public static class QuintetSerdes<A, B, C, D, E>   extends ByteArraySerde<Quintet<A, B, C, D, E> > {
-
-
-    }
-
-
-    public static class SextetSerdes<A, B, C, D, E, F>  extends ByteArraySerde<Sextet<A, B, C, D, E, F>> {
-
-
-    }
-
-    public static class SeptetSerdes<A, B, C, D, E, F, G>   extends ByteArraySerde<Septet<A, B, C, D, E, F, G> > {
-
-
+        public QuartetSerdes(Class<Quartet<A, B, C, D>> classOb) {
+            super(classOb);
+        }
     }
 
 
-    public static class HashSetSerde<A> extends ByteArraySerde<HashSet<A>> {
-
-
+    public static class QuintetSerdes<A, B, C, D, E> extends DefaultSerde<Quintet<A, B, C, D, E>> {
+        public QuintetSerdes(Class<Quintet<A, B, C, D, E>> classOb) {
+            super(classOb);
+        }
     }
+
+
+    public static class SextetSerdes<A, B, C, D, E, F> extends DefaultSerde<Sextet<A, B, C, D, E, F>> {
+
+        public SextetSerdes(Class<Sextet<A, B, C, D, E, F>> classOb) {
+            super(classOb);
+        }
+    }
+
+    public static class SeptetSerdes<A, B, C, D, E, F, G> extends DefaultSerde<Septet<A, B, C, D, E, F, G>> {
+        public SeptetSerdes(Class<Septet<A, B, C, D, E, F, G>> classOb) {
+            super(classOb);
+        }
+    }
+
+
 
 
 

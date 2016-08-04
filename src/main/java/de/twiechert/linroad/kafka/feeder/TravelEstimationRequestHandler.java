@@ -44,7 +44,7 @@ public class TravelEstimationRequestHandler extends TupleHandler<Octet<Long, Int
 
     @Override
     protected Class<? extends Serializer<Void>> getValueSerializerClass() {
-        return AccountBalanceRequestHandler.ValueSerializer.class;
+        return Void.Serializer.class;
     }
 
     @Override

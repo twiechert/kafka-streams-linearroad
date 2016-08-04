@@ -1,6 +1,8 @@
 package de.twiechert.linroad.kafka.model.historical;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quintet;
 
 /**
@@ -8,27 +10,35 @@ import org.javatuples.Quintet;
  */
 public class DailyExpenditureRequest extends Quintet<Long, Integer, Integer, Integer, Integer> {
 
+    public DailyExpenditureRequest() {
+    }
+
     public DailyExpenditureRequest(Long requestTime, Integer vehicleId, Integer queryId, Integer xway, Integer day) {
         super(requestTime, vehicleId, queryId, xway, day);
     }
 
 
+    @JsonIgnore
     public long getRequestTime() {
         return getValue0();
     }
 
+    @JsonIgnore
     public int getVehicleId() {
         return getValue1();
     }
 
+    @JsonIgnore
     public int getQueryId() {
         return getValue2();
     }
 
+    @JsonIgnore
     public int getXWay() {
         return getValue3();
     }
 
+    @JsonIgnore
     public int getDay() {
         return getValue3();
     }
@@ -39,10 +49,13 @@ public class DailyExpenditureRequest extends Quintet<Long, Integer, Integer, Int
     }
 
 
-    public static class Serde extends ByteArraySerde<DailyExpenditureRequest> {
+    public static class Serde extends DefaultSerde<DailyExpenditureRequest> {
+        public Serde() {
+            super(DailyExpenditureRequest.class);
+        }
     }
 
     public static class Serializer
-            extends ByteArraySerde.BArraySerializer<DailyExpenditureRequest> {
+            extends DefaultSerde.DefaultSerializer<DailyExpenditureRequest> {
     }
 }

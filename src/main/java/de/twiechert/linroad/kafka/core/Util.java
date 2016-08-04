@@ -1,10 +1,12 @@
 package de.twiechert.linroad.kafka.core;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import org.joda.time.Seconds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,5 +48,7 @@ public class Util {
         return Double.parseDouble(ob);
     }
 
-
+    public static <T> Class<T> convert(TypeReference<T> ref) {
+        return (Class<T>) ((ParameterizedType) ref.getType()).getRawType();
+    }
 }

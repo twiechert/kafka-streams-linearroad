@@ -1,6 +1,9 @@
 package de.twiechert.linroad.kafka.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
+import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
 import org.javatuples.Septet;
 import org.javatuples.Sextet;
 
@@ -20,26 +23,36 @@ public class TollNotification extends Septet<Integer, Integer, Long, Long, Doubl
     }
 
 
+    public TollNotification() {
+
+    }
+
+    @JsonIgnore
     public int getVehicleId() {
         return getValue1();
     }
 
+    @JsonIgnore
     public long getRequestTime() {
         return getValue2();
     }
 
+    @JsonIgnore
     public long getResponseTime() {
         return getValue3();
     }
 
+    @JsonIgnore
     public double getVelocity() {
         return getValue4();
     }
 
+    @JsonIgnore
     public double getToll() {
         return getValue5();
     }
 
+    @JsonIgnore
     public int getXway() {
         return getValue6();
     }
@@ -54,7 +67,10 @@ public class TollNotification extends Septet<Integer, Integer, Long, Long, Doubl
         return this.getClass().getSimpleName() + " -> " + super.toString();
     }
 
-    public static class Serde extends ByteArraySerde<TollNotification> {
+    public static class Serde extends DefaultSerde<TollNotification> {
+        public Serde() {
+            super(TollNotification.class);
+        }
     }
 
 }

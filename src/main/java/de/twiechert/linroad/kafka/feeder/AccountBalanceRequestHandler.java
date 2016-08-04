@@ -44,7 +44,7 @@ public class AccountBalanceRequestHandler extends TupleHandler<AccountBalanceReq
 
     @Override
     protected Class<? extends Serializer<Void>> getValueSerializerClass() {
-        return ValueSerializer.class;
+        return Void.Serializer.class;
     }
 
     @Override
@@ -53,5 +53,4 @@ public class AccountBalanceRequestHandler extends TupleHandler<AccountBalanceReq
     }
 
 
-    public static class ValueSerializer extends ByteArraySerde.BArraySerializer<Void> {}
 }

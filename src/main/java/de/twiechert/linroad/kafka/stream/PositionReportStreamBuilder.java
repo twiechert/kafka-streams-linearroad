@@ -21,8 +21,8 @@ public class PositionReportStreamBuilder {
     public PositionReportStreamBuilder() {
     }
 
-    public KStream<XwaySegmentDirection, PositionReport.Value> getStream(KStreamBuilder builder) {
+    public KStream<XwaySegmentDirection, PositionReport> getStream(KStreamBuilder builder) {
          return builder.stream(new XwaySegmentDirection.Serde(),
-                 new PositionReport.ValueSerde(), PositionReportHandler.TOPIC);
+                 new PositionReport.Serde(), PositionReportHandler.TOPIC);
     }
 }

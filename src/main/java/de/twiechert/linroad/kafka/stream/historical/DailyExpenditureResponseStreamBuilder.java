@@ -3,10 +3,7 @@ package de.twiechert.linroad.kafka.stream.historical;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.Void;
-import de.twiechert.linroad.kafka.model.historical.AccountBalanceRequest;
-import de.twiechert.linroad.kafka.model.historical.DailyExpenditureRequest;
-import de.twiechert.linroad.kafka.model.historical.DailyExpenditureResponse;
-import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
+import de.twiechert.linroad.kafka.model.historical.*;
 import de.twiechert.linroad.kafka.stream.StreamBuilder;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -37,13 +34,18 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
     }
 
     public KStream<Void, DailyExpenditureResponse> getStream(KStream<DailyExpenditureRequest, Void> dailyExpenditureRequestStream,
-                                                             KTable<XwayVehicleDay, Double> currentTollPerXwayVehicleDayTable) {
+                                                             KTable<XwayVehicleDay, Double> tollHistory) {
 
+        /**
+         * such that Type identifies this tuple as an daily expenditure request, Time is the time of the request, VID is the vehicle making the request, QID is the query identifier,
+         * and XWay and Day (1 . . .69) identify the expressway and the day (1 is yesterday, 69 is 10 weeks ago) for which an expenditure total is desired. Travel time requests are tuples of the form,
+         */
         KStream<XwayVehicleDay, DailyExpenditureRequest> accountBalanceRequestsPerVehicleXwayAndDay =
-                dailyExpenditureRequestStream.map((k, v) -> new KeyValue<>(new XwayVehicleDay(k.getXWay(), k.getVehicleId(), k.getDay()), k))
+                dailyExpenditureRequestStream.map((k, v) -> new KeyValue<>(new XwayVehicleDay(k.getXWay(), k.getVehicleId(), Util.dayOfReport(k.getRequestTime()) - k.getDay()), k))
                         .through(new XwayVehicleDay.Serde(), new DailyExpenditureRequest.Serde(), "ACC_BALANCE_PER_XWAY_VEH_DAY");
 
-        return accountBalanceRequestsPerVehicleXwayAndDay.leftJoin(currentTollPerXwayVehicleDayTable,
+
+        return accountBalanceRequestsPerVehicleXwayAndDay.leftJoin(tollHistory,
                 (dayRequest, currToll) -> new DailyExpenditureResponse(dayRequest.getRequestTime(), this.context.getCurrentRuntimeInSeconds(), dayRequest.getQueryId(), (currToll == null) ? 0 : currToll))
                 .selectKey((k, v) -> new Void());
     }

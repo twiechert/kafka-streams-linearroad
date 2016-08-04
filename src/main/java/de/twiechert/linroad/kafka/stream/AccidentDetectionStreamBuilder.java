@@ -1,5 +1,7 @@
 package de.twiechert.linroad.kafka.stream;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.SerdePrototype;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.model.PositionReport;
@@ -13,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Type;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -28,15 +31,22 @@ public class AccidentDetectionStreamBuilder {
     private static final Logger logger = LoggerFactory
             .getLogger(AccidentDetectionStreamBuilder.class);
 
+
+    private Class<Quartet<Long, Integer, Boolean, Integer>> ImCl = Util.convert(new TypeReference<Quartet<Long, Integer, Boolean, Integer>>() {
+    });
+    private Class<Quintet<Integer, Integer, Boolean, Integer, Integer>> ImCl2 = Util.convert(new TypeReference<Quintet<Integer, Integer, Boolean, Integer, Integer>>() {
+    });
+
     public AccidentDetectionStreamBuilder() {
     }
 
-    public KStream<XwaySegmentDirection, Long> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReportStream) {
+    public KStream<XwaySegmentDirection, Long> getStream(KStream<XwaySegmentDirection, PositionReport> positionReportStream) {
         logger.debug("Building stream to identify accidents");
 
         // an accident at minute m expressway x, segment s, direction d will be mapped to all segments downstream 0..4
         //detect an accident on a given segment whenever two or more vehicles are stopped in that segment at the same lane and position
         // therefore flatmapping to all affected segments
+
 
 
         return positionReportStream.filter((k, v) -> v.getSpeed() == 0).map((key, value) -> new KeyValue<>(
@@ -53,7 +63,7 @@ public class AccidentDetectionStreamBuilder {
                                     (aggregat.getValue1() != -1 && (!aggregat.getValue1().equals(value.getValue1())));
                             return new Quartet<>(time, value.getValue1(), multiple, aggregat.getValue3() + 1);
                         }
-                        , TimeWindows.of("ACC-DET-WINDOW", 4 * 30).advanceBy(30), new TupleSerdes.QuintetSerdes<>(), new TupleSerdes.QuartetSerdes<>()).toStream()
+                        , TimeWindows.of("ACC-DET-WINDOW", 4 * 30).advanceBy(30), new TupleSerdes.QuintetSerdes<>(ImCl2), new TupleSerdes.QuartetSerdes<>(ImCl)).toStream()
                 .filter((k, v) -> v.getValue2() && v.getValue3() >= 8)
                 // key -> xway, segment, direction | value -> minute in which accident has been detected
                 .flatMap((key0, value0) ->

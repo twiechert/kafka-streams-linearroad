@@ -42,7 +42,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
         super(context, util, new Void.Serde(), new AccidentNotification.Serde());
     }
 
-    public KStream<Void, AccidentNotification> getStream(KStream<XwaySegmentDirection, PositionReport.Value> positionReports,
+    public KStream<Void, AccidentNotification> getStream(KStream<XwaySegmentDirection, PositionReport> positionReports,
                                                          KStream<XwaySegmentDirection, Long> accidentReports) {
         logger.debug("Building stream to notify drivers about accidents");
 
@@ -57,7 +57,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
         // i.e. the accident detection must be "before" up to one second
        return  accidentReports.through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_DET_NOT")
                .join(positionReports, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("ACC-NOT-WINDOW").before(60),
-                        new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), new PositionReport.ValueSerde())
+                       new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), new PositionReport.Serde())
                .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), context.getCurrentRuntimeInSeconds(), k.getSeg())));
 
     }

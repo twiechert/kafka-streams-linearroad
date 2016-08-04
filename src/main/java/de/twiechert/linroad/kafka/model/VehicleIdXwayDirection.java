@@ -1,6 +1,9 @@
 package de.twiechert.linroad.kafka.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
+import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
@@ -20,15 +23,22 @@ public class VehicleIdXwayDirection extends Triplet<Integer, Integer, Boolean> i
         super(vehicleId, xwaySegmentDirection.getXway(), xwaySegmentDirection.getDir());
     }
 
+    public VehicleIdXwayDirection() {
 
+    }
+
+
+    @JsonIgnore
     public Integer getVehicleId() {
         return getValue0();
     }
 
+    @JsonIgnore
     public Integer getXway() {
         return getValue1();
     }
 
+    @JsonIgnore
     public Boolean getDir() {
         return getValue2();
     }
@@ -38,7 +48,10 @@ public class VehicleIdXwayDirection extends Triplet<Integer, Integer, Boolean> i
         return this.getClass().getSimpleName() + " -> " + super.toString();
     }
 
-    public static class Serde extends ByteArraySerde<VehicleIdXwayDirection> {
+    public static class Serde extends DefaultSerde<VehicleIdXwayDirection> {
+        public Serde() {
+            super(VehicleIdXwayDirection.class);
+        }
     }
 
 

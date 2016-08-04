@@ -17,4 +17,8 @@ public class Void implements Serializable {
 
     public static class Serde extends ByteArraySerde<Void> {
     }
+
+    public static class Serializer extends ByteArraySerde.BArraySerializer<Void> {
+    }
+
 }

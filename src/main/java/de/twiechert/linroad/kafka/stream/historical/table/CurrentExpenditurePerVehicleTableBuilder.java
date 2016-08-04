@@ -1,5 +1,7 @@
 package de.twiechert.linroad.kafka.stream.historical.table;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.Void;
 import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
 import de.twiechert.linroad.kafka.model.TollNotification;
@@ -9,6 +11,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 import org.springframework.stereotype.Component;
 
 
@@ -21,6 +24,9 @@ import org.springframework.stereotype.Component;
 public class CurrentExpenditurePerVehicleTableBuilder {
 
 
+    private Class<Pair<Long, Double>> ImCl = Util.convert(new TypeReference<Pair<Long, Double>>() {
+    });
+
     public CurrentExpenditurePerVehicleTableBuilder() {
     }
 
@@ -31,7 +37,7 @@ public class CurrentExpenditurePerVehicleTableBuilder {
 
             return new Pair<>(Math.max(aggregat.getValue0(), value.getRequestTime()), aggregat.getValue1() + value.getToll());
         }, "CURR_TOLL_PER_VEH_WINDOW")
-                .through(new Serdes.IntegerSerde(), new TupleSerdes.PairSerdes<>(), "CURR_TOLL_PER_VEH");
+                .through(new Serdes.IntegerSerde(), new TupleSerdes.PairSerdes<>(ImCl), "CURR_TOLL_PER_VEH");
 
     }
 }

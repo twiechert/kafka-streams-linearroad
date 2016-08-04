@@ -19,7 +19,7 @@ import static de.twiechert.linroad.kafka.core.Util.pLng;
  * // (Type = 0, Time, VID, Spd, XWay, Lane, Dir, Seg, Pos) key -> Type = 0, Time, VID,  | value -> Time, VID, Spd, Lane, Pos*
  */
 @Component
-public class PositionReportHandler extends TupleHandler<XwaySegmentDirection, PositionReport.Value> {
+public class PositionReportHandler extends TupleHandler<XwaySegmentDirection, PositionReport> {
 
     public static final String TOPIC = "POS";
 
@@ -34,8 +34,8 @@ public class PositionReportHandler extends TupleHandler<XwaySegmentDirection, Po
     }
 
     @Override
-    protected PositionReport.Value transformValue(String[] tuple) {
-        return new PositionReport.Value(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]), pInt(tuple[5]), pInt(tuple[8]));
+    protected PositionReport transformValue(String[] tuple) {
+        return new PositionReport(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]), pInt(tuple[5]), pInt(tuple[8]));
     }
 
     @Override
@@ -44,8 +44,8 @@ public class PositionReportHandler extends TupleHandler<XwaySegmentDirection, Po
     }
 
     @Override
-    protected Class<? extends Serializer<PositionReport.Value>> getValueSerializerClass() {
-        return PositionReport.ValueSerializer.class;
+    protected Class<? extends Serializer<PositionReport>> getValueSerializerClass() {
+        return PositionReport.Serializer.class;
     }
 
     @Override
