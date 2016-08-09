@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.model.historical;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Triplet;
 
@@ -32,15 +31,7 @@ public class XwayVehicleDay extends Triplet<Integer, Integer, Integer> {
         return getValue2();
     }
 
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + " -> " + super.toString();
-    }
-
     public static class Serde extends DefaultSerde<XwayVehicleDay> {
-        public Serde() {
-            super(XwayVehicleDay.class);
-        }
     }
 
     public static class Serializer

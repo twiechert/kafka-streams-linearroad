@@ -5,10 +5,24 @@
             <pattern>%d %5p | %t | %-55logger{55} | %m %n</pattern>
         </encoder>
     </appender>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>testFile.log</file>
+        <append>true</append>
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <root level="warn" additivity="false">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
     <logger name="de.twiechert" level="debug" ref="CONSOLE" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
+    <!--
+      <logger name="de.twiechert.linroad.kafka.core.serde" level="debug" ref="FILE" additivity="false">
+          <appender-ref ref="FILE"/>
+      </logger> -->
 </configuration>

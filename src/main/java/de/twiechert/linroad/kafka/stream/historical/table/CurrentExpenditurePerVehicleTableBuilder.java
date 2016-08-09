@@ -1,17 +1,13 @@
 package de.twiechert.linroad.kafka.stream.historical.table;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.Void;
-import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.TollNotification;
-import de.twiechert.linroad.kafka.model.historical.AccountBalanceRequest;
+import de.twiechert.linroad.kafka.model.historical.ExpenditureAt;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
-import org.javatuples.Pair;
-import org.javatuples.Triplet;
 import org.springframework.stereotype.Component;
 
 
@@ -23,21 +19,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class CurrentExpenditurePerVehicleTableBuilder {
 
-
-    private Class<Pair<Long, Double>> ImCl = Util.convert(new TypeReference<Pair<Long, Double>>() {
-    });
-
-    public CurrentExpenditurePerVehicleTableBuilder() {
-    }
-
-    public KTable<Integer, Pair<Long, Double>> getStream(KStream<Void, TollNotification> tollNotification) {
+    public KTable<Integer, ExpenditureAt> getStream(KStream<Void, TollNotification> tollNotification) {
 
         // re-key be vehicle id
-        return tollNotification.map((k, v) -> new KeyValue<>(v.getVehicleId(), v)).aggregateByKey(() -> new Pair<>(0l, 0d), (key, value, aggregat) -> {
+        return tollNotification.map((k, v) -> new KeyValue<>(v.getVehicleId(), v))
+                .aggregateByKey(() -> new ExpenditureAt(0L, 0d), (key, value, aggregat) -> {
 
-            return new Pair<>(Math.max(aggregat.getValue0(), value.getRequestTime()), aggregat.getValue1() + value.getToll());
-        }, "CURR_TOLL_PER_VEH_WINDOW")
-                .through(new Serdes.IntegerSerde(), new TupleSerdes.PairSerdes<>(ImCl), "CURR_TOLL_PER_VEH");
+                            return new ExpenditureAt(Math.max(aggregat.getTime(), value.getRequestTime()), aggregat.getExpenditure() + value.getToll());
+                        }
+                        , new Serdes.IntegerSerde(), new DefaultSerde<>(), "CURR_TOLL_PER_VEH_WINDOW")
+                .through(new Serdes.IntegerSerde(), new DefaultSerde<>(), "CURR_TOLL_PER_VEH");
 
     }
 }

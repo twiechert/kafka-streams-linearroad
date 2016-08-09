@@ -3,9 +3,10 @@ package de.twiechert.linroad.kafka.stream.historical;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.Void;
-import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.historical.AccountBalanceRequest;
 import de.twiechert.linroad.kafka.model.historical.AccountBalanceResponse;
+import de.twiechert.linroad.kafka.model.historical.ExpenditureAt;
 import de.twiechert.linroad.kafka.stream.StreamBuilder;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
@@ -28,14 +29,13 @@ public class AccountBalanceResponseStreamBuilder extends StreamBuilder<Void, Acc
 
     @Autowired
     public AccountBalanceResponseStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util, new Void.Serde(), new AccountBalanceResponse.Serde());
+        super(context, util);
     }
 
     public KStream<Void, AccountBalanceResponse> getStream(KStream<AccountBalanceRequest, Void> accountBalanceRequestStream,
-                                                           KTable<Integer, Pair<Long, Double>> currentTollTable) {
-
+                                                           KTable<Integer, ExpenditureAt> currentTollTable) {
         KStream<Integer, AccountBalanceRequest> accountBalanceRequestsPerVehicle = accountBalanceRequestStream.map((k, v) -> new KeyValue<>(k.getVehicleID(), k))
-                .through(new Serdes.IntegerSerde(), new AccountBalanceRequest.Serde(), "ACC_BALANCE_PER_VEHICLE");
+                .through(new Serdes.IntegerSerde(), new DefaultSerde<>(), "ACC_BALANCE_PER_VEHICLE");
 
         return accountBalanceRequestsPerVehicle.leftJoin(currentTollTable,
                 (accValue, tollVal) -> new AccountBalanceResponse(accValue.getRequestTime(), context.getCurrentRuntimeInSeconds(), (tollVal == null) ? -1 : tollVal.getValue0(), accValue.getQueryId(), (tollVal == null) ? 0 : tollVal.getValue1()))

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tafyun on 01.06.16.
@@ -15,12 +14,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class Util {
 
-    private LinearRoadKafkaBenchmarkApplication.Context context;
 
-    @Autowired
-    public Util(LinearRoadKafkaBenchmarkApplication.Context context) {
-       this.context = context;
-    }
 
     public static long minuteOfReport(long timestamp) {
         return (timestamp/60)+1;

@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.model.historical;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Triplet;
 
@@ -33,18 +32,12 @@ public class AccountBalanceRequest extends Triplet<Long, Integer, Integer> {
         return getValue2();
     }
 
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + " -> " + super.toString();
-    }
 
     public static class Serde extends DefaultSerde<AccountBalanceRequest> {
-        public Serde() {
-            super(AccountBalanceRequest.class);
-        }
     }
 
     public static class Serializer
             extends DefaultSerde.DefaultSerializer<AccountBalanceRequest> {
+
     }
 }

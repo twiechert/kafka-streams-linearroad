@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.core;
 
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
-import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 
 import java.io.Serializable;
 
@@ -10,15 +9,14 @@ import java.io.Serializable;
  */
 public class Void implements Serializable {
 
+
     @Override
     public String toString() {
         return "";
     }
 
-    public static class Serde extends ByteArraySerde<Void> {
-    }
 
-    public static class Serializer extends ByteArraySerde.BArraySerializer<Void> {
+    public static class Serializer extends DefaultSerde.DefaultSerializer<Void> {
     }
 
 }

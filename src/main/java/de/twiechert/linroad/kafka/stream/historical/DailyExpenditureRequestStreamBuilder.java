@@ -1,8 +1,8 @@
 package de.twiechert.linroad.kafka.stream.historical;
 
 import de.twiechert.linroad.kafka.core.Void;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.feeder.DailyExpenditureRequestHandler;
-import de.twiechert.linroad.kafka.model.historical.AccountBalanceRequest;
 import de.twiechert.linroad.kafka.model.historical.DailyExpenditureRequest;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
@@ -20,7 +20,7 @@ public class DailyExpenditureRequestStreamBuilder {
     }
 
     public KStream<DailyExpenditureRequest, Void> getStream(KStreamBuilder builder) {
-        return builder.stream(new DailyExpenditureRequest.Serde(),
-                new Void.Serde(), DailyExpenditureRequestHandler.TOPIC);
+        return builder.stream(new DefaultSerde<>(),
+                new DefaultSerde<>(), DailyExpenditureRequestHandler.TOPIC);
     }
 }

@@ -1,9 +1,9 @@
 package de.twiechert.linroad.kafka.stream.historical.table;
 
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.feeder.historical.TollHistoryRequestHandler;
 import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class TollHistoryTableBuilder {
     public KTable<XwayVehicleDay, Double> getTable(KStreamBuilder builder) {
         return builder.table(new XwayVehicleDay.Serde(),
                 new Serdes.DoubleSerde(), TollHistoryRequestHandler.TOPIC)
-                .through(new XwayVehicleDay.Serde(), new Serdes.DoubleSerde(), TOPIC);
+                .through(new DefaultSerde<>(), new Serdes.DoubleSerde(), TOPIC);
 
     }
 

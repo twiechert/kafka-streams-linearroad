@@ -2,10 +2,8 @@ package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import de.twiechert.linroad.kafka.model.historical.DailyExpenditureRequest;
 import org.apache.kafka.common.serialization.Serializer;
-import org.javatuples.Quintet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

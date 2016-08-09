@@ -2,7 +2,6 @@ package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.jdriver.DataDriverLibrary;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.feeder.historical.HistoricalDataFeeder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,7 @@ public class DataFeeder {
             this.tupleHandlers = tupleHandlers;
             this.context = context;
             DataFeeder.this.dataDriverLibrary.startProgram(filePath, this);
-            Arrays.stream(this.tupleHandlers).forEach(tupleHandler -> tupleHandler.close());
+            Arrays.stream(this.tupleHandlers).forEach(TupleHandler::close);
         }
 
         public void invoke(String s) {

@@ -51,12 +51,9 @@ public class PositionReport extends Quintet<Long, Integer, Integer, Integer, Int
 
     public static class Serializer
             extends DefaultSerde.DefaultSerializer<PositionReport> {
+
+
     }
 
 
-    public static class Serde extends DefaultSerde<PositionReport> {
-        public Serde() {
-            super(PositionReport.class);
-        }
-    }
 }

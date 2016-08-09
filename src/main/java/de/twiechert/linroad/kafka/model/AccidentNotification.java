@@ -1,9 +1,7 @@
 package de.twiechert.linroad.kafka.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
-import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
 import org.javatuples.Quartet;
 
 /**
@@ -35,13 +33,7 @@ public class AccidentNotification extends Quartet<Integer, Long, Long, Integer> 
 
 
     public static class Serde extends DefaultSerde<AccidentNotification> {
-        public Serde() {
-            super(AccidentNotification.class);
-        }
+
     }
 
-    @Override
-    public String toString() {
-        return "AccidentNotification->" + super.toString();
-    }
 }

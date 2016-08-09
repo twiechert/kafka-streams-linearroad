@@ -1,24 +1,21 @@
-package de.twiechert.linroad.kafka.core.serde;
+package de.twiechert.linroad.kafka.core.serde.provider;
 
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.util.SerializationUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Created by tafyun on 10.07.16.
  */
+@Deprecated
 public class ByteArraySerde<T extends Serializable> implements Serde<T> {
 
 
-
+    @Deprecated
     public static class BArraySerializer<A> implements Serializer<A> {
         @Override
         public void configure(Map<String, ?> map, boolean b) {
@@ -36,6 +33,7 @@ public class ByteArraySerde<T extends Serializable> implements Serde<T> {
         }
     }
 
+    @Deprecated
     public static class BArrayDeserializer<A> implements Deserializer<A> {
 
 

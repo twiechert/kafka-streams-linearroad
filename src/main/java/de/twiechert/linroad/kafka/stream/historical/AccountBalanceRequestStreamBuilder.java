@@ -1,6 +1,7 @@
 package de.twiechert.linroad.kafka.stream.historical;
 
 import de.twiechert.linroad.kafka.core.Void;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.feeder.AccountBalanceRequestHandler;
 import de.twiechert.linroad.kafka.model.historical.AccountBalanceRequest;
 import org.apache.kafka.streams.kstream.KStream;
@@ -21,6 +22,6 @@ public class AccountBalanceRequestStreamBuilder {
 
     public KStream<AccountBalanceRequest, Void> getStream(KStreamBuilder builder) {
         return builder.stream(new AccountBalanceRequest.Serde(),
-                new Void.Serde(), AccountBalanceRequestHandler.TOPIC);
+                new DefaultSerde<>(), AccountBalanceRequestHandler.TOPIC);
     }
 }

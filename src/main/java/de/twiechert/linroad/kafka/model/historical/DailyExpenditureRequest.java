@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.model.historical;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quintet;
 
@@ -43,16 +42,9 @@ public class DailyExpenditureRequest extends Quintet<Long, Integer, Integer, Int
         return getValue3();
     }
 
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + " -> " + super.toString();
-    }
-
 
     public static class Serde extends DefaultSerde<DailyExpenditureRequest> {
-        public Serde() {
-            super(DailyExpenditureRequest.class);
-        }
+
     }
 
     public static class Serializer

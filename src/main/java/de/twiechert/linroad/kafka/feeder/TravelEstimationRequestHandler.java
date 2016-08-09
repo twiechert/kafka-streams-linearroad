@@ -2,10 +2,9 @@ package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Void;
-import de.twiechert.linroad.kafka.core.serde.ByteArraySerde;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.javatuples.Octet;
-import org.javatuples.Quintet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +51,7 @@ public class TravelEstimationRequestHandler extends TupleHandler<Octet<Long, Int
         return TOPIC;
     }
 
-    public static class KeySerializer extends ByteArraySerde.BArraySerializer<Octet<Long, Integer, Integer, Integer, Integer, Integer, Integer, Integer>> {}
+    public static class KeySerializer extends DefaultSerde.DefaultSerializer<Octet<Long, Integer, Integer, Integer, Integer, Integer, Integer, Integer>> {
+    }
 
 }

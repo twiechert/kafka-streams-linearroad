@@ -1,15 +1,11 @@
 package de.twiechert.linroad.kafka.stream;
 
-import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.javatuples.Pair;
-import org.javatuples.Sextet;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,11 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PositionReportStreamBuilder {
 
-    public PositionReportStreamBuilder() {
-    }
-
     public KStream<XwaySegmentDirection, PositionReport> getStream(KStreamBuilder builder) {
-         return builder.stream(new XwaySegmentDirection.Serde(),
-                 new PositionReport.Serde(), PositionReportHandler.TOPIC);
+        return builder.stream(new DefaultSerde<>(), new DefaultSerde<>(), PositionReportHandler.TOPIC);
     }
 }

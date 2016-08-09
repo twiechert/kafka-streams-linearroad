@@ -2,7 +2,7 @@ package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
-import de.twiechert.linroad.kafka.core.serde.TupleSerdes;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.AverageVelocity;
 import de.twiechert.linroad.kafka.model.CurrentToll;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
@@ -10,7 +10,6 @@ import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
-import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
@@ -34,10 +33,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
 
     @Autowired
     public CurrentTollStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context,
-                util,
-                new XwaySegmentDirection.Serde(),
-                new CurrentToll.Serde());
+        super(context, util);
     }
 
 
@@ -47,16 +43,18 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
 
 
-        return latestAverageVelocityStream.through(new XwaySegmentDirection.Serde(), new AverageVelocity.Serde(), "LAV_TOLL")
-                .join(numberOfVehiclesStream.through(new XwaySegmentDirection.Serde(), new NumberOfVehicles.Serde(), "NOV_TOLL"),
+        return latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), "LAV_TOLL")
+                .join(numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), "NOV_TOLL"),
                         (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
-                        JoinWindows.of("LAV-NOV-WINDOW"), new XwaySegmentDirection.Serde(), new AverageVelocity.Serde(), new NumberOfVehicles.Serde())
+                        JoinWindows.of("LAV-NOV-WINDOW"), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
-                .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1).through(new XwaySegmentDirection.Serde(), new Serdes.LongSerde(), "ACC_TOLL"),
+                .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1).through(new DefaultSerde<>(), new Serdes.LongSerde(), "ACC_TOLL"),
                         (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 != null),
                         JoinWindows.of("LAV-NOV-ACC-WINDOW"),
-                        new XwaySegmentDirection.Serde(), new Serdes.LongSerde())
+                        new DefaultSerde<>(), new DefaultSerde<>())
                 .mapValues(v -> {
+
+                    // logger.debug("Minute {} Accident {}, Speed {}, NOV {}",v.getValue0(),  v.getValue3(), v.getValue1(), v.getValue2());
                     // accident --> no toll
                     if (v.getValue3() || v.getValue1() >= 40 || v.getValue2() <= 50)
                         return new CurrentToll(v.getValue0(), 0d, v.getValue1());

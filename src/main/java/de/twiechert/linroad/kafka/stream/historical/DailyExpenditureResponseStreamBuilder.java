@@ -3,15 +3,12 @@ package de.twiechert.linroad.kafka.stream.historical;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.Void;
+import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.historical.*;
 import de.twiechert.linroad.kafka.stream.StreamBuilder;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
-import org.javatuples.Pair;
-import org.javatuples.Sextet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +27,7 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
 
     @Autowired
     public DailyExpenditureResponseStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util, new Void.Serde(), new DailyExpenditureResponse.Serde());
+        super(context, util);
     }
 
     public KStream<Void, DailyExpenditureResponse> getStream(KStream<DailyExpenditureRequest, Void> dailyExpenditureRequestStream,
@@ -42,11 +39,12 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
          */
         KStream<XwayVehicleDay, DailyExpenditureRequest> accountBalanceRequestsPerVehicleXwayAndDay =
                 dailyExpenditureRequestStream.map((k, v) -> new KeyValue<>(new XwayVehicleDay(k.getXWay(), k.getVehicleId(), Util.dayOfReport(k.getRequestTime()) - k.getDay()), k))
-                        .through(new XwayVehicleDay.Serde(), new DailyExpenditureRequest.Serde(), "ACC_BALANCE_PER_XWAY_VEH_DAY");
+                        .through(new DefaultSerde<>(), new DefaultSerde<>(), "ACC_BALANCE_PER_XWAY_VEH_DAY");
 
 
         return accountBalanceRequestsPerVehicleXwayAndDay.leftJoin(tollHistory,
-                (dayRequest, currToll) -> new DailyExpenditureResponse(dayRequest.getRequestTime(), this.context.getCurrentRuntimeInSeconds(), dayRequest.getQueryId(), (currToll == null) ? 0 : currToll))
+                (dayRequest, currToll) -> new DailyExpenditureResponse(dayRequest.getRequestTime(), this.context.getCurrentRuntimeInSeconds(), dayRequest.getQueryId(), (currToll == null) ? 0 : currToll)
+        )
                 .selectKey((k, v) -> new Void());
     }
 
