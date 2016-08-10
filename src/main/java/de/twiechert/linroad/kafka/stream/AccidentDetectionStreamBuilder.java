@@ -8,13 +8,12 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.javatuples.Pair;
-import org.javatuples.Quartet;
 import org.javatuples.Quintet;
-import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -45,21 +44,18 @@ public class AccidentDetectionStreamBuilder {
                 new Pair<>(value.getTime(), value.getVehicleId())))
                 // current time to use | if more than one vehicle in window | current count of position reports in window
 
-                .aggregateByKey(() -> new AccidentDetectionValIntermediate(-1, false, 0),
+                .aggregateByKey(AccidentDetectionValIntermediate::new,
                         (key, value, aggregat) -> {
-
-                            // indicates if there are multiple cars in the considered window
-                            boolean multiple = aggregat.getValue1() ||
-                                    (aggregat.getValue0() != -1 && (!aggregat.getValue0().equals(value.getValue1())));
-
-                            logger.warn("Larger 6 {} {}", aggregat.getValue2(), multiple);
-
-
-                            return new AccidentDetectionValIntermediate(value.getValue1(), multiple, aggregat.getValue2() + 1);
+                            if (!aggregat.containsKey(value.getValue1())) {
+                                aggregat.put(value.getValue1(), 1);
+                            } else {
+                                aggregat.put(value.getValue1(), aggregat.get(value.getValue1()) + 1);
+                            }
+                            return aggregat;
                         }
                         , TimeWindows.of("ACC-DET-WINDOW", 4 * 30).advanceBy(30), new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream()
-                .filter((k, v) -> v.getValue1() && v.getValue2() >= 8)
+                .filter((k, v) -> v.entrySet().stream().filter(p -> p.getValue() >= 4).count() >= 2)
                 // key -> xway, segment, direction | value -> minute in which accident has been detected
                 .flatMap((key0, value0) ->
                         IntStream.of(4).mapToObj(in -> new KeyValue<>(new XwaySegmentDirection(key0.key().getValue0(), ((key0.key().getValue3() - in) < 0) ? 0 : key0.key().getValue3() - in, key0.key().getValue2()),
@@ -70,10 +66,8 @@ public class AccidentDetectionStreamBuilder {
     }
 
 
-    public static class AccidentDetectionValIntermediate extends Triplet<Integer, Boolean, Integer> {
-        public AccidentDetectionValIntermediate(Integer value1, Boolean value2, Integer value3) {
-            super(value1, value2, value3);
-        }
+    public static class AccidentDetectionValIntermediate extends HashMap<Integer, Integer> {
+
 
     }
 
