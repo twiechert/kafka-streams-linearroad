@@ -9,12 +9,16 @@ import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.springframework.stereotype.Component;
 
 /**
- * Created by tafyun on 28.07.16.
+ * This class provides the Kafka position report topic as stream.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
+ *
  */
 @Component
 public class PositionReportStreamBuilder {
 
     public KStream<XwaySegmentDirection, PositionReport> getStream(KStreamBuilder builder) {
-        return builder.stream(new DefaultSerde<>(), new DefaultSerde<>(), PositionReportHandler.TOPIC);
+        KStream<XwaySegmentDirection, PositionReport> posStream = builder.stream(new DefaultSerde<>(), new DefaultSerde<>(), PositionReportHandler.TOPIC);
+        return posStream;
     }
 }

@@ -37,8 +37,11 @@ public class AccidentDetectionStreamBuilder {
         //detect an accident on a given segment whenever two or more vehicles are stopped in that segment at the same lane and position
         // therefore flatmapping to all affected segments
 
-        positionReportStream.filter((k, v) -> v.getSpeed() == 0).print();
 
+        // IMPORTANT for joining: , but only if q (position report) was emitted
+        // **no** earlier than the minute following the minute when the accident occurred.
+        // i.e. the accident detection must be "before" up to one second
+        // --> we map accidents of minutes k to minute k+1
         return positionReportStream.filter((k, v) -> v.getSpeed() == 0).map((key, value) -> new KeyValue<>(
                 new XwayLaneDirSegPosIntermediate(key.getXway(), value.getLane(), key.getDir(), key.getSeg(), value.getPos()),
                 new Pair<>(value.getTime(), value.getVehicleId())))
@@ -59,7 +62,7 @@ public class AccidentDetectionStreamBuilder {
                 // key -> xway, segment, direction | value -> minute in which accident has been detected
                 .flatMap((key0, value0) ->
                         IntStream.of(4).mapToObj(in -> new KeyValue<>(new XwaySegmentDirection(key0.key().getValue0(), ((key0.key().getValue3() - in) < 0) ? 0 : key0.key().getValue3() - in, key0.key().getValue2()),
-                                Util.minuteOfReport(key0.window().end()))).collect(Collectors.toList()));
+                                Util.minuteOfReport(key0.window().end()) + 1)).collect(Collectors.toList()));
 
 
 

@@ -12,17 +12,17 @@ public class AccidentNotification extends Quartet<Integer, Long, Long, Integer> 
     public AccidentNotification() {
     }
 
-    public AccidentNotification(Long requestTime, Long responseTime, Integer segment) {
-        super(1, requestTime, responseTime, segment);
+    public AccidentNotification(Long occurenceTime, Long emitTime, Integer segment) {
+        super(1, occurenceTime, emitTime, segment);
     }
 
     @JsonIgnore
-    public long getRequestTime() {
+    public long getOccurenceTime() {
         return getValue1();
     }
 
     @JsonIgnore
-    public long getResponseTIme() {
+    public long getEmitTime() {
         return getValue2();
     }
 

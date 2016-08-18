@@ -9,13 +9,13 @@ import org.javatuples.Septet;
  */
 public class TollNotification extends Septet<Integer, Integer, Long, Long, Double, Double, Integer> {
 
-    public TollNotification(Integer vehicleId, Long reqTime, Long respTime, Double velocity, Double toll, Integer xway) {
-        super(0, vehicleId, reqTime, respTime, velocity, toll, xway);
+    public TollNotification(Integer vehicleId, Long reqTime, Long emitTime, Double velocity, Double toll, Integer xway) {
+        super(0, vehicleId, reqTime, emitTime, velocity, toll, xway);
         // the xway is not required in the output tuple, but we use this stream for further table processing
     }
 
-    public TollNotification(Integer vehicleId, Long reqTime, Long respTime, Double velocity, Double toll) {
-        super(0, vehicleId, reqTime, respTime, velocity, toll, 0);
+    public TollNotification(Integer vehicleId, Long reqTime, Long emitTime, Double velocity, Double toll) {
+        super(0, vehicleId, reqTime, emitTime, velocity, toll, 0);
         // the xway is not required in the output tuple, but we use this stream for further table processing
     }
 
@@ -35,7 +35,7 @@ public class TollNotification extends Septet<Integer, Integer, Long, Long, Doubl
     }
 
     @JsonIgnore
-    public long getResponseTime() {
+    public long getEmitTime() {
         return getValue3();
     }
 

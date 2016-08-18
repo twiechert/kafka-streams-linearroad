@@ -2,6 +2,7 @@ package de.twiechert.linroad.kafka.core.serde.provider;
 
 import de.twiechert.linroad.kafka.model.*;
 import de.twiechert.linroad.kafka.model.historical.*;
+import de.twiechert.linroad.kafka.stream.AccidentNotificationStreamBuilder;
 import de.twiechert.linroad.kafka.stream.LatestAverageVelocityStreamBuilder;
 import de.twiechert.linroad.kafka.stream.NumberOfVehiclesStreamBuilder;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -45,7 +46,9 @@ public class FSTSerde<T extends Serializable> implements Serde<T> {
                 VehicleIdXwayDirection.class,
                 XwaySegmentDirection.class,
                 NumberOfVehiclesStreamBuilder.VehicleIdTimeIntermediate.class,
-                LatestAverageVelocityStreamBuilder.LatestAverageVelocityIntermediate.class
+                LatestAverageVelocityStreamBuilder.LatestAverageVelocityIntermediate.class,
+                AccidentNotificationStreamBuilder.AccidentNotificationIntermediate.class,
+                SegmentCrossing.class
         );
 
     }
@@ -78,8 +81,6 @@ public class FSTSerde<T extends Serializable> implements Serde<T> {
 
         @Override
         public A deserialize(String s, byte[] bytes) {
-
-
             return (bytes != null) ? (A) conf.asObject(bytes) : null;
         }
 

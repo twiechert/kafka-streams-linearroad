@@ -36,10 +36,10 @@ public class NumberOfVehiclesStreamBuilder {
 
         return positionReportStream.mapValues(v -> new Pair<>(v.getVehicleId(), v.getTime()))
                 // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
-                .aggregateByKey(() -> new Pair<>(0L, new HashSet<>()), (key, value, agg) -> {
+                .aggregateByKey(() -> new VehicleIdTimeIntermediate(0L, new HashSet<>()), (key, value, agg) -> {
                     //  aggregat.getValue1() + 1
                     agg.getValue1().add(value.getValue0());
-                    return new Pair<>(minuteOfReport(value.getValue1() + 1), agg.getValue1());
+                    return new VehicleIdTimeIntermediate(minuteOfReport(value.getValue1()) + 1, agg.getValue1());
 
                 }, TimeWindows.of("NOV-WINDOW", 60), new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream().map((k, v) -> new KeyValue<>(k.key(), new NumberOfVehicles(v.getValue0(), v.getValue1().size())));

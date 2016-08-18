@@ -15,6 +15,10 @@ public class Void implements Serializable {
         return "";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return true;
+    }
 
     public static class Serializer extends DefaultSerde.DefaultSerializer<Void> {
     }

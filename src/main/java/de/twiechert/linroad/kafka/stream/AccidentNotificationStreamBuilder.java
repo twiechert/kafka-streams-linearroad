@@ -12,6 +12,8 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
 import org.javatuples.Pair;
+import org.javatuples.Sextet;
+import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,11 +48,12 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
          * but only if q was emitted no earlier than theminute following theminutewhen the accident occurred, and no later than the minute the accident is
          */
 
+
         // IMPORTANT for joining: , but only if q (position report) was emitted
-        // **no** earlier than the minute following them inutew hen the accident occurred.
+        // **no** earlier than the minute following the minute when the accident occurred.
         // i.e. the accident detection must be "before" up to one second
         return accidentReports.through(new DefaultSerde<>(), new Serdes.LongSerde(), "ACC_DET_NOT")
-               .join(positionReports, (value1, value2) -> new Pair<>(value1, value1), JoinWindows.of("ACC-NOT-WINDOW").before(60),
+                .join(positionReports.mapValues(v -> AccidentNotificationIntermediate.fromPosReport(v)).through(new DefaultSerde<>(), new DefaultSerde<>(), "sds"), (value1, value2) -> value2, JoinWindows.of("ACC-NOT-WINDOW"),
                        new DefaultSerde<>(), new Serdes.LongSerde(), new DefaultSerde<>())
                .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), context.getCurrentRuntimeInSeconds(), k.getSeg())));
 
@@ -61,4 +64,17 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
         return TOPIC;
     }
 
+
+    public static class AccidentNotificationIntermediate extends Sextet<Long, Long, Integer, Integer, Integer, Integer> {
+
+        public AccidentNotificationIntermediate(Long value0, Long value1, Integer value2, Integer value3, Integer value4, Integer value5) {
+            super(value0, value1, value2, value3, value4, value5);
+        }
+
+        public static AccidentNotificationIntermediate fromPosReport(PositionReport positionReport) {
+            return new AccidentNotificationIntermediate(Util.minuteOfReport(positionReport.getValue0()), positionReport.getValue0(), positionReport.getValue1(), positionReport.getValue2(), positionReport.getValue3(), positionReport.getValue4());
+
+        }
+
+    }
 }

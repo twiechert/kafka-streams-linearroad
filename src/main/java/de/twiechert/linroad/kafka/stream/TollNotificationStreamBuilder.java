@@ -16,7 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Created by tafyun on 29.07.16.
+ * This stream realizes the toll notification.
+ * It is not the same as the current toll stream {@link CurrentTollStreamBuilder}. A couple of things have to be considered here:
+ *
+ * (I) tolls are triggerd by the position report of a vehicle
+ * (II) tolls are only calculated, if a vehicle has changed the segment since the last position report (which is not guaranteed)
+ * (III) if the new segment is an exit lane, neither a toll is notified/assessed
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
+ *
  */
 @Component
 public class TollNotificationStreamBuilder extends StreamBuilder<Void, TollNotification> {
@@ -32,40 +40,44 @@ public class TollNotificationStreamBuilder extends StreamBuilder<Void, TollNotif
         super(context, util);
     }
 
-    public KStream<Void, TollNotification> getStream(KStream<XwaySegmentDirection, PositionReport> positionReports,
+    public KStream<Void, TollNotification> getStream(KStream<VehicleIdXwayDirection, SegmentCrossing> consecutivePositionReports,
                                                      KStream<XwaySegmentDirection, CurrentToll> currentTollStream) {
         logger.debug("Building stream to notify drivers about accidents");
 
         /**
          * If the vehicle exits at the exit ramp of a segment, the toll for that segment is not charged. -> thus position reports on exits can be ignored.
-         * We consider position reports per xway, segment, drection and vehicle -> thus remapping
          */
-        KStream<VehicleIdXwayDirection, TollNotificationPosReportIntermediate> filteredPositionReports = positionReports.filter((k, v) -> v.getLane() != 4)
-                .map((k, v) -> new KeyValue<>(new VehicleIdXwayDirection(v.getVehicleId(), k), new TollNotificationPosReportIntermediate(v.getTime(), k.getSeg())))
-                .through(new DefaultSerde<>(), new DefaultSerde<>(), "POS_BY_VEHICLE");
 
 
-        /**
-         * ... must calculate a toll every time a vehicle reports a position in a new segment, and notify the driver of this toll.
-         * --> we must check if the segment has changed since the last psotion report of that vehicle.
-         * Because Kafka streams does not support data-driven windows, we self-join the position report with a slide of 30 seconds
-         */
-        // consider that a position report should only
-        KStream<VehicleIdXwayDirection, TollNotificationPosReportIntermediate> consecutivePositionReports = filteredPositionReports.join(filteredPositionReports, (report1, report2) -> new Triplet<>(report1.getValue0(), report1.getValue1(), report1.getValue1().equals(report2.getValue1())),
-                JoinWindows.of("POS-POS-WINDOW").after(30), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
-                .filter((k, v) -> v.getValue2()).mapValues(v -> new TollNotificationPosReportIntermediate(v.getValue0(), v.getValue1()));
 
         // has to be remapped to be joinable with current toll stream
         // in order to join, we map the time to minutes (tolls are based on the current minute)
         // but we must preserve the actul timestamp, because it has to be emitted
-        return consecutivePositionReports.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getValue1(), k.getDir()), new ConsecutivePosReportIntermediate(Util.minuteOfReport(v.getValue0()), v.getValue0(), k.getVehicleId())))
+        /**
+         * CURRENT TOLL STREAM
+         * s:1 =>  m=0 -> toll, m=1 -> toll, m=2 -> toll, 3 -> toll, m=4 -> toll, m=5 -> toll....
+         * s:2 =>  m=0 -> toll, m=1 -> toll, m=2 -> toll, 3 -> toll, m=4 -> toll, m=5 -> toll....
+         * s:3 =>  m=0 -> toll, m=1 -> toll, m=2 -> toll, 3 -> toll, m=4 -> toll, m=5 -> toll....
+         * .....
+
+         * SEGMENT CROSSING STREAM
+         * seconds=0 -> crossing                      seconds=90 -> crossing, seconds=120-> crossing -->
+         *
+         * Before joining, times have to be remapped, because: "the toll reported for the segment being exited is assessed to the vehicle’s account.
+         * Thus, a toll calculation for one segment often is concurrent with an account being debited for the previous segment."
+         *
+         * 0 -> toll, 30 -> toll, 60 -> toll, 90 -> toll, 120 -> toll, 150 -> toll....
+         * 0 -> crossing                      90 -> crossing, 120-> crossing -->
+         *
+         */
+        return consecutivePositionReports.filter((k, v) -> v.getLane() != 4).map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getSegment() - 1, k.getDir()),
+                // for joining purpose we need the minute of the position report, but we need to keep the exact timestamp for emiting
+                new ConsecutivePosReportIntermediate(Util.minuteOfReport(v.getPredecessorTime()), v.getTime(), k.getVehicleId())))
                 // join with current toll stream, create VID, time, current time, speed , toll
                 .through(new DefaultSerde<>(), new DefaultSerde<>(), "CONS_POS")
-                .join(currentTollStream, (psRep, currToll) -> new TollNotification(psRep.getValue2(), psRep.getValue1(), context.getCurrentRuntimeInSeconds(), currToll.getVelocity(), currToll.getToll()),
-                        JoinWindows.of("POS-TOLLN_WINDOW"), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>()).map((k, v) -> new KeyValue<>(new Void(), v.setXway(k.getXway())))
+                .join(currentTollStream, (psRep, currToll) -> new TollNotification(psRep.getVehicleId(), psRep.getTime(), LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(), currToll.getVelocity(), currToll.getToll()),
+                        JoinWindows.of("POS-TOLLN_WINDOW").with(3), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>()).map((k, v) -> new KeyValue<>(new Void(), v.setXway(k.getXway())))
                 .filter((k, v) -> v.getToll() > 0);
-
-
 
     }
 
@@ -74,19 +86,21 @@ public class TollNotificationStreamBuilder extends StreamBuilder<Void, TollNotif
         return TOPIC;
     }
 
-    public static class TollNotificationPosReportIntermediate extends Pair<Long, Integer> {
-
-        public TollNotificationPosReportIntermediate(Long time, Integer segment) {
-            super(time, segment);
-        }
-
-    }
 
     public static class ConsecutivePosReportIntermediate extends Triplet<Long, Long, Integer> {
 
-        public ConsecutivePosReportIntermediate(Long value0, Long value1, Integer value2) {
-            super(value0, value1, value2);
+        public ConsecutivePosReportIntermediate(Long timeMinute, Long time, Integer vehicleId) {
+            super(timeMinute, time, vehicleId);
         }
+
+        public Long getTime() {
+            return this.getValue1();
+        }
+
+        public Integer getVehicleId() {
+            return this.getValue2();
+        }
+
     }
 
 

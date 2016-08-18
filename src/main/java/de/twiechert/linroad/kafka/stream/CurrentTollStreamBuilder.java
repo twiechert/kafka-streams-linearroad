@@ -48,7 +48,8 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
                         JoinWindows.of("LAV-NOV-WINDOW"), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
-                .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1).through(new DefaultSerde<>(), new Serdes.LongSerde(), "ACC_TOLL"),
+                .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1)
+                                .through(new DefaultSerde<>(), new Serdes.LongSerde(), "ACC_TOLL"),
                         (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 != null),
                         JoinWindows.of("LAV-NOV-ACC-WINDOW"),
                         new DefaultSerde<>(), new DefaultSerde<>())
@@ -60,7 +61,6 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         return new CurrentToll(v.getValue0(), 0d, v.getValue1());
                     else
                         return new CurrentToll(v.getValue0(), 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
-
 
                 });
 

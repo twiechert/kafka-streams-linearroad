@@ -9,6 +9,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
@@ -34,6 +36,9 @@ public class DataFeeder {
     private AccountBalanceRequestHandler accountBalanceRequestHandler;
 
     @Autowired
+    private MinuteTimer minuteTimer;
+
+    @Autowired
     private LinearRoadKafkaBenchmarkApplication.Context context;
 
 
@@ -57,10 +62,21 @@ public class DataFeeder {
         public void invoke(String s) {
             if (!firstArived) {
                 this.context.markAsStarted();
+                //this.startMinuteFeeder();
                 firstArived = true;
             }
             String[] tuple = s.split(",");
             Arrays.stream(this.tupleHandlers).forEach(tupleHandler -> tupleHandler.handle(tuple));
+        }
+
+        @Async
+        private void startMinuteFeeder() {
+            new Timer().scheduleAtFixedRate(new TimerTask() {
+                public void run() {
+                    minuteTimer.handle(null);
+                }
+            }, 0, 60 * 1000);
+
         }
 
     }

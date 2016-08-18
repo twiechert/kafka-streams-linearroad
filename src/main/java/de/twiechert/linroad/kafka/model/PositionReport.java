@@ -1,6 +1,7 @@
 package de.twiechert.linroad.kafka.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quintet;
 
@@ -10,6 +11,7 @@ import java.io.Serializable;
  * Created by tafyun on 29.07.16.
  */
 public class PositionReport extends Quintet<Long, Integer, Integer, Integer, Integer> implements Serializable {
+
 
 
     public PositionReport() {
@@ -48,6 +50,10 @@ public class PositionReport extends Quintet<Long, Integer, Integer, Integer, Int
         return getValue4();
     }
 
+    @Override
+    public String toString() {
+        return LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds() + " ->" + super.toString();
+    }
 
     public static class Serializer
             extends DefaultSerde.DefaultSerializer<PositionReport> {
