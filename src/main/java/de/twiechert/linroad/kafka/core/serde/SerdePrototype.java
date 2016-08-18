@@ -7,7 +7,6 @@ import org.apache.kafka.common.serialization.Serializer;
 import java.util.Map;
 
 /**
- *
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class SerdePrototype<SerdeOf> implements Serde<SerdeOf> {
