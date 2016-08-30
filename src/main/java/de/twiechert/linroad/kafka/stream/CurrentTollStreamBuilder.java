@@ -43,24 +43,25 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
 
 
-        return latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), "LAV_TOLL")
-                .join(numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), "NOV_TOLL"),
+        return latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
+                .join(numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("NOV_TOLL")),
                         (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
-                        JoinWindows.of("LAV-NOV-WINDOW"), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
+                        JoinWindows.of(context.topic("LAV-NOV-WINDOW")), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
                 .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1)
-                                .through(new DefaultSerde<>(), new Serdes.LongSerde(), "ACC_TOLL"),
-                        (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 != null),
-                        JoinWindows.of("LAV-NOV-ACC-WINDOW"),
+                                .through(new DefaultSerde<>(), new Serdes.LongSerde(), context.topic("ACC_TOLL")),
+                        (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 == null),
+                        JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
                         new DefaultSerde<>(), new DefaultSerde<>())
                 .mapValues(v -> {
 
                     // logger.debug("Minute {} Accident {}, Speed {}, NOV {}",v.getValue0(),  v.getValue3(), v.getValue1(), v.getValue2());
                     // accident --> no toll
-                    if (v.getValue3() || v.getValue1() >= 40 || v.getValue2() <= 50)
-                        return new CurrentToll(v.getValue0(), 0d, v.getValue1());
-                    else
+                    if (v.getValue3() && v.getValue1() < 40 && v.getValue2() > 50)
                         return new CurrentToll(v.getValue0(), 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
+                    else
+                        return new CurrentToll(v.getValue0(), 0d, v.getValue1());
+
 
                 });
 

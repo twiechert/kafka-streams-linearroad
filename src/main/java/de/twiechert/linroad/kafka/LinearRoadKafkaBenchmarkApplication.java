@@ -34,6 +34,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
@@ -53,12 +54,16 @@ public class LinearRoadKafkaBenchmarkApplication {
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(LinearRoadKafkaBenchmarkApplication.class);
 
+
     public static void main(String[] args) {
+
         SpringApplication.run(LinearRoadKafkaBenchmarkApplication.class, args);
     }
 
 
+
     @Component
+    @Profile("!build")
     public static class BenchmarkRunner implements CommandLineRunner {
 
         @Autowired
@@ -138,14 +143,14 @@ public class LinearRoadKafkaBenchmarkApplication {
                  * Converting position reports to processable Kafka stream
                  */
                 KStream<XwaySegmentDirection, PositionReport> positionReportStream = positionReportStreamBuilder.getStream(builder);
-                //   positionReportStream.print();
+                // if(context.isDebugMode())  positionReportStream.print();
 
 
                 /**
                  *
                  */
                 KStream<VehicleIdXwayDirection, SegmentCrossing> segmentCrossingPositionReportStream = segmentCrossingPositionReportBuilder.getStream(positionReportStream);
-                //  segmentCrossingPositionReportStream.print();
+                // if(context.isDebugMode())  segmentCrossingPositionReportStream.print();
 
                 /**
                  * Converting account balance request to processable Kafka stream
@@ -160,32 +165,31 @@ public class LinearRoadKafkaBenchmarkApplication {
                  * Building NOV stream
                  */
                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
-                //numberOfVehiclesStream.print();
+                if (context.isDebugMode()) numberOfVehiclesStream.print();
 
                 /**
                  * Building LAV stream
                  */
                 KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
-                //latestAverageVelocityStream.print();
+                // if(context.isDebugMode())  latestAverageVelocityStream.print();
 
                 /**
                  * Building Accident detection stream
                  */
                 KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
-                accidentDetectionStream.print();
+                if (context.isDebugMode()) accidentDetectionStream.print();
 
                 /**
                  * Building Accident notification stream
                  */
                 KStream<Void, AccidentNotification> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
                 accidentNotificationStream.writeAsText("output/" + accidentNotificationStreamBuilder.getOutputTopic() + ".csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
-                accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
+                //accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
 
                 /**
                  * Building current toll per Xway-Segmen-Directon tuple stream
                  */
                 KStream<XwaySegmentDirection, CurrentToll> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
-                currentTollStream.filter((k, v) -> v.getToll() > 0);
                 //currentTollStream.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
 
                 /**
@@ -202,8 +206,7 @@ public class LinearRoadKafkaBenchmarkApplication {
                  * (b) toll per vehicle, per day, per expressway
                  */
                 // this table may be derived from the above (how to realize in Kafka streams?)
-                KTable<Integer, ExpenditureAt> tollPerVehicleTable = currentExpenditurePerVehicleTableBuilder.getStream(segmentCrossingPositionReportStream,
-                        tollNotificationStream);
+                KTable<Integer, ExpenditureAt> tollPerVehicleTable = currentExpenditurePerVehicleTableBuilder.getStream(segmentCrossingPositionReportStream, currentTollStream);
 
                 /**
                  * Building stream to answer account balance requests
@@ -257,6 +260,12 @@ public class LinearRoadKafkaBenchmarkApplication {
         @Value("${linearroad.data.path}")
         private String filePath;
 
+        @Value("${linearroad.mode.debug}")
+        private boolean debugMode;
+
+        @Value("${linearroad.datadriver.path}")
+        private String dataDriverPath;
+
         @Value("${linearroad.kafka.bootstrapservers}")
         private String bootstrapServers;
 
@@ -269,29 +278,33 @@ public class LinearRoadKafkaBenchmarkApplication {
         @Value("${linearroad.kafka.num_stream_threads}")
         private int numberOfThreads;
 
-        private final String applicationId = "1";//generator.generateByRegex("[0-9a-z]{3}");
-        private static DateTime benchmarkStartedAt = DateTime.now();
+        private final String applicationId = generator.generateByRegex("[0-9a-z]{3}");
+        private static DateTime benchmarkStartedAt = DateTime.now(); // will be overriden, when first element is written to topic ....
 
         public Context() {
+        }
+
+        public String topic(String topic) {
+            return topic;//+"-"+applicationId;
         }
 
         @PostConstruct
         private void initializeBaseConfig() {
             logger.debug("Configured kafka servers are {} and zookeeper {}", bootstrapServers, zookeeperServer);
-
+            logger.debug("Application Id is {}", applicationId);
             streamBaseConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark-" + this.getApplicationId());
             streamBaseConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
             streamBaseConfig.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, zookeeperServer);
             streamBaseConfig.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, PositionReportHandler.TimeStampExtractor.class.getName());
-            //    streamBaseConfig.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, (numberOfThreads<1)? Runtime.getRuntime().availableProcessors():numberOfThreads);
-            //   streamBaseConfig.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 0);
+            streamBaseConfig.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, (numberOfThreads < 1) ? Runtime.getRuntime().availableProcessors() : numberOfThreads);
+            // streamBaseConfig.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 0);
 
             producerBaseConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
             producerBaseConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerBaseConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
-            producerBaseConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 0); //16384);
+            //producerBaseConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 0); //16384);
 
-            producerBaseConfig.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+            //producerBaseConfig.put(ProducerConfig.LINGER_MS_CONFIG, 1);
             producerBaseConfig.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
         }
 
@@ -326,6 +339,14 @@ public class LinearRoadKafkaBenchmarkApplication {
         public String getLinearRoadMode() {
             return linearRoadMode;
         }
+
+        public String getDataDriverPath() {
+            return dataDriverPath;
+        }
+
+        public boolean isDebugMode() {
+            return debugMode;
+        }
     }
 
 
@@ -338,7 +359,7 @@ public class LinearRoadKafkaBenchmarkApplication {
     @Bean
     public DataDriver getDataDriver(Context context) {
         logger.debug("Path to file is {}", context.getFilePath());
-        return new DataDriver(context.getFilePath(), DataDriver.Architecture.X64_LINUX);
+        return new DataDriver(context.getFilePath(), context.getDataDriverPath(), DataDriver.Architecture.X64_LINUX);
     }
 
 

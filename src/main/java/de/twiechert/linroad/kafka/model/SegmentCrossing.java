@@ -20,6 +20,9 @@ public class SegmentCrossing extends Quartet<Long, Integer, Integer, Long> {
         super(-1L, -1, -1, -1L);
     }
 
+    public SegmentCrossing(SegmentCrossing segmentCrossing, Long predecessorTime) {
+        super(segmentCrossing.getTime(), segmentCrossing.getSegment(), segmentCrossing.getLane(), predecessorTime);
+    }
 
     public Long getTime() {
         return this.getValue0();

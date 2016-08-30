@@ -37,7 +37,7 @@ public abstract class TupleHandler<Outputkey, OutputValue> {
 
     public boolean handle(String[] tuple) {
         if (handleOn == -1 || pInt(tuple[0]) == handleOn) {
-            producer.send(new ProducerRecord<>(this.getTopic(), this.transformKey(tuple), this.transformValue(tuple)));
+            producer.send(new ProducerRecord<>(context.topic(this.getTopic()), this.transformKey(tuple), this.transformValue(tuple)));
             return true;
         }
         return false;

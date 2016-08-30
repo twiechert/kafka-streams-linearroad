@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.stream;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.PositionReport;
@@ -11,6 +12,7 @@ import org.javatuples.Pair;
 import org.javatuples.Quintet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -29,6 +31,8 @@ public class AccidentDetectionStreamBuilder {
     private static final Logger logger = LoggerFactory
             .getLogger(AccidentDetectionStreamBuilder.class);
 
+    @Autowired
+    private LinearRoadKafkaBenchmarkApplication.Context context;
 
     public KStream<XwaySegmentDirection, Long> getStream(KStream<XwaySegmentDirection, PositionReport> positionReportStream) {
         logger.debug("Building stream to identify accidents");
@@ -56,7 +60,7 @@ public class AccidentDetectionStreamBuilder {
                             }
                             return aggregat;
                         }
-                        , TimeWindows.of("ACC-DET-WINDOW", 4 * 30).advanceBy(30), new DefaultSerde<>(), new DefaultSerde<>())
+                        , TimeWindows.of(context.topic("ACC_DET_WINDOW"), 4 * 30).advanceBy(30), new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream()
                 .filter((k, v) -> v.entrySet().stream().filter(p -> p.getValue() >= 4).count() >= 2)
                 // key -> xway, segment, direction | value -> minute in which accident has been detected

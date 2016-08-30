@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.stream;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.PositionReport;
@@ -10,6 +11,7 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -30,6 +32,8 @@ public class NumberOfVehiclesStreamBuilder {
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(NumberOfVehiclesStreamBuilder.class);
 
+    @Autowired
+    private LinearRoadKafkaBenchmarkApplication.Context context;
 
     public KStream<XwaySegmentDirection, NumberOfVehicles> getStream(KStream<XwaySegmentDirection, PositionReport> positionReportStream) {
         logger.debug("Building stream to identify number of vehicles at expressway, segment and direction per minute.");
@@ -41,7 +45,7 @@ public class NumberOfVehiclesStreamBuilder {
                     agg.getValue1().add(value.getValue0());
                     return new VehicleIdTimeIntermediate(minuteOfReport(value.getValue1()) + 1, agg.getValue1());
 
-                }, TimeWindows.of("NOV-WINDOW", 60), new DefaultSerde<>(), new DefaultSerde<>())
+                }, TimeWindows.of(context.topic("NOV_WINDOW"), 60), new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream().map((k, v) -> new KeyValue<>(k.key(), new NumberOfVehicles(v.getValue0(), v.getValue1().size())));
 
     }

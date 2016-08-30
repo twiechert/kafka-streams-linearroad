@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.stream;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.SegmentCrossing;
@@ -12,6 +13,7 @@ import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,6 +28,8 @@ public class SegmentCrossingPositionReportBuilder {
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(SegmentCrossingPositionReportBuilder.class);
 
+    @Autowired
+    private LinearRoadKafkaBenchmarkApplication.Context context;
 
     public KStream<VehicleIdXwayDirection, SegmentCrossing> getStream(KStream<XwaySegmentDirection, PositionReport> positionReports) {
         logger.debug("Building stream to notify segment crossing position reports");
@@ -37,7 +41,7 @@ public class SegmentCrossingPositionReportBuilder {
                  * THIS IS NOT EQUAL TO USING BEFORE(), AFTER()
                  */
                 .map((k, v) -> new KeyValue<>(new VehicleIdXwayDirection(v.getVehicleId(), k), new SegmentCrossing(v.getTime(), k.getSeg(), v.getLane())))
-                .through(new DefaultSerde<>(), new DefaultSerde<>(), "POS_BY_VEHICLE_XWAY_DIR");
+                .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("POS_BY_VEHICLE_XWAY_DIR"));
 
 
         KStream<VehicleIdXwayDirection, SegmentCrossing> posReportByVehicleXwayDirShifted = positionReports
@@ -46,7 +50,7 @@ public class SegmentCrossingPositionReportBuilder {
                  * THIS IS NOT EQUAL TO USING BEFORE(), AFTER()
                  */
                 .map((k, v) -> new KeyValue<>(new VehicleIdXwayDirection(v.getVehicleId(), k), new SegmentCrossing(v.getTime() + 30, k.getSeg(), v.getLane())))
-                .through(new DefaultSerde<>(), new DefaultSerde<>(), "POS_BY_VEHICLE_XWAY_DIR_SHIFTED");
+                .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("POS_BY_VEHICLE_XWAY_DIR_SHIFTED"));
 
         /**
          * ... must calculate a toll every time a vehicle reports a position in a new segment, and notify the driver of this toll.
@@ -60,13 +64,13 @@ public class SegmentCrossingPositionReportBuilder {
                 (report1, report2) -> new Quartet<>(report1.getTime(), report1.getSegment(), report2 == null || !report1.getSegment().equals(report2.getSegment()), report1.getLane()),
                 // self-join x1 on x2 such that x2 is 30 seconds before...
                 // @see https://github.com/twiechert/linear-road-general/blob/master/Images/Self-Join-Toll-Notification.png to get an idea
-                JoinWindows.of("POS-POS-WINDOW"), new DefaultSerde<>(), new DefaultSerde<>())
+                JoinWindows.of(context.topic("POS_BY_VEHICLE_XWAY_DIR_POS_POS_BY_VEHICLE_XWAY_DIR_SHIFTED_WINDOW")), new DefaultSerde<>(), new DefaultSerde<>())
                 // we consider only those where the segment has changed....
                 .filter((k, v) -> v.getValue2())
                 .mapValues(v -> new SegmentCrossing(v.getValue0(), v.getValue1(), v.getValue3()))
                 // with that hack, we can save the time of the predecessor (timestamp of vehicle emitting position in segment before) which is required to the toll notification
                 // however, this assumes that events do not arrive out of order (per-key)
-                .aggregateByKey(() -> new SegmentCrossing(), (key, value, agg) -> value.setPredecessorTime(agg.getTime()), new DefaultSerde<>(), new DefaultSerde<>(), "SEG-CROSS-WITH-PREDECESSOR").toStream();
+                .aggregateByKey(() -> new SegmentCrossing(), (key, value, agg) -> new SegmentCrossing(value, agg.getTime()), new DefaultSerde<>(), new DefaultSerde<>(), "SEG_CROSSISNGS_WITH_PREDECESSOR").toStream();
 
 
     }

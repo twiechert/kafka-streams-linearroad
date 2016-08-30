@@ -40,7 +40,7 @@ public class TollNotificationStreamBuilder extends StreamBuilder<Void, TollNotif
         super(context, util);
     }
 
-    public KStream<Void, TollNotification> getStream(KStream<VehicleIdXwayDirection, SegmentCrossing> consecutivePositionReports,
+    public KStream<Void, TollNotification> getStream(KStream<VehicleIdXwayDirection, SegmentCrossing> segmentCrossingPositionReports,
                                                      KStream<XwaySegmentDirection, CurrentToll> currentTollStream) {
         logger.debug("Building stream to notify drivers about accidents");
 
@@ -70,14 +70,26 @@ public class TollNotificationStreamBuilder extends StreamBuilder<Void, TollNotif
          * 0 -> crossing                      90 -> crossing, 120-> crossing -->
          *
          */
-        return consecutivePositionReports.filter((k, v) -> v.getLane() != 4).map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getSegment() - 1, k.getDir()),
-                // for joining purpose we need the minute of the position report, but we need to keep the exact timestamp for emiting
-                new ConsecutivePosReportIntermediate(Util.minuteOfReport(v.getPredecessorTime()), v.getTime(), k.getVehicleId())))
+        KStream<XwaySegmentDirection, ConsecutivePosReportIntermediate> seg_crossings_for_toll_not = segmentCrossingPositionReports
+                .filter((k, v) -> v.getLane() != 4)
+                /**
+                 * When position report for change to segment s, we need to assses segment s-1 and for that we need
+                 * to substract 1 in the segment and change the event time accordingly
+                 */
+                .map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getSegment() - 1, k.getDir()),
+
+                        // for joining purpose we need the minute of the preceding position report, but we need to keep the exact timestamp for emiting
+                        new ConsecutivePosReportIntermediate(Util.minuteOfReport(v.getPredecessorTime()), v.getTime(), k.getVehicleId())))
                 // join with current toll stream, create VID, time, current time, speed , toll
-                .through(new DefaultSerde<>(), new DefaultSerde<>(), "CONS_POS")
+                .through(new DefaultSerde<>(), new DefaultSerde<>(), "SEG_CROSSINGS_FOR_TOLL_NOT");
+
+        //seg_crossings_for_toll_not.print();
+        return seg_crossings_for_toll_not
                 .join(currentTollStream, (psRep, currToll) -> new TollNotification(psRep.getVehicleId(), psRep.getTime(), LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(), currToll.getVelocity(), currToll.getToll()),
-                        JoinWindows.of("POS-TOLLN_WINDOW").with(3), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>()).map((k, v) -> new KeyValue<>(new Void(), v.setXway(k.getXway())))
+                        JoinWindows.of("SEG_CROSSINGS_FOR_TOLL_NOT_CURR_TOLL_WINDOW"), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
+                .selectKey((k, v) -> new Void())
                 .filter((k, v) -> v.getToll() > 0);
+
 
     }
 

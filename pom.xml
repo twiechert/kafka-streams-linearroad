@@ -7,6 +7,7 @@
     <groupId>de.twiechert</groupId>
     <artifactId>kafka-linearroad</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
@@ -88,7 +89,7 @@
         <dependency>
             <groupId>com.github.twiechert</groupId>
             <artifactId>linearroad-java-driver</artifactId>
-            <version>fda4e1a68d</version>
+            <version>19881f6007</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -107,7 +108,6 @@
             <url>https://jitpack.io</url>
         </repository>
     </repositories>
-
     <build>
         <plugins>
             <plugin>
@@ -115,8 +115,19 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication</mainClass>
+                    <profiles>
+                        <profile>build</profile>
+                    </profiles>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
 </project>

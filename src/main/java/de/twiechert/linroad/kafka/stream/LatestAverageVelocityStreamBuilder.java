@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.stream;
 
+import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.AverageVelocity;
 import de.twiechert.linroad.kafka.model.PositionReport;
@@ -11,6 +12,7 @@ import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
@@ -22,6 +24,9 @@ import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
 @Component
 public class LatestAverageVelocityStreamBuilder {
 
+
+    @Autowired
+    private LinearRoadKafkaBenchmarkApplication.Context context;
 
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(LatestAverageVelocityStreamBuilder.class);
@@ -36,7 +41,7 @@ public class LatestAverageVelocityStreamBuilder {
                                 (key, value, aggregat) -> {
                                     int n = aggregat.getValue0() + 1;
                                     return new LatestAverageVelocityIntermediate(n, aggregat.getValue1() * (((double) n - 1) / n) + (double) value.getValue0() / n, Math.max(aggregat.getValue2(), minuteOfReport(value.getValue1())));
-                                }, TimeWindows.of("LAV_WINDOW", 5 * 60).advanceBy(60), new DefaultSerde<>(), new DefaultSerde<>())
+                                }, TimeWindows.of(context.topic("LAV_WINDOW"), 5 * 60).advanceBy(60), new DefaultSerde<>(), new DefaultSerde<>())
                         .toStream().map((k, v) -> new KeyValue<>(k.key(), new AverageVelocity(v.getValue2(), v.getValue1())));
 
 

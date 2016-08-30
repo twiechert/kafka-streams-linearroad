@@ -52,8 +52,9 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
         // IMPORTANT for joining: , but only if q (position report) was emitted
         // **no** earlier than the minute following the minute when the accident occurred.
         // i.e. the accident detection must be "before" up to one second
-        return accidentReports.through(new DefaultSerde<>(), new Serdes.LongSerde(), "ACC_DET_NOT")
-                .join(positionReports.mapValues(v -> AccidentNotificationIntermediate.fromPosReport(v)).through(new DefaultSerde<>(), new DefaultSerde<>(), "sds"), (value1, value2) -> value2, JoinWindows.of("ACC-NOT-WINDOW"),
+        return accidentReports.through(new DefaultSerde<>(), new Serdes.LongSerde(), context.topic("ACC_DET_NOT"))
+                .join(positionReports.mapValues(v -> AccidentNotificationIntermediate.fromPosReport(v))
+                                .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("ACC_DET_POS")), (value1, value2) -> value2, JoinWindows.of(context.topic("ACC_NOT_WINDOW")),
                        new DefaultSerde<>(), new Serdes.LongSerde(), new DefaultSerde<>())
                .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), context.getCurrentRuntimeInSeconds(), k.getSeg())));
 
