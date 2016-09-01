@@ -7,6 +7,7 @@ import de.twiechert.linroad.kafka.model.AverageVelocity;
 import de.twiechert.linroad.kafka.model.CurrentToll;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
+import de.twiechert.linroad.kafka.stream.processor.Punctuator;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
@@ -48,8 +49,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
                         JoinWindows.of(context.topic("LAV-NOV-WINDOW")), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
-                .leftJoin(accidentDetectionStream.mapValues(v -> Util.minuteOfReport(v) - 1)
-                                .through(new DefaultSerde<>(), new Serdes.LongSerde(), context.topic("ACC_TOLL")),
+                .leftJoin(accidentDetectionStream.through(new DefaultSerde<>(), new Serdes.LongSerde(), context.topic("ACC_TOLL")),
                         (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 == null),
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
                         new DefaultSerde<>(), new DefaultSerde<>())
@@ -58,10 +58,9 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                     // logger.debug("Minute {} Accident {}, Speed {}, NOV {}",v.getValue0(),  v.getValue3(), v.getValue1(), v.getValue2());
                     // accident --> no toll
                     if (v.getValue3() && v.getValue1() < 40 && v.getValue2() > 50)
-                        return new CurrentToll(v.getValue0(), 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
+                        return new CurrentToll(Util.minuteOfReport(v.getValue0()) + 1, 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
                     else
-                        return new CurrentToll(v.getValue0(), 0d, v.getValue1());
-
+                        return new CurrentToll(Util.minuteOfReport(v.getValue0()) + 1, 0d, v.getValue1());
 
                 });
 

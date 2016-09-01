@@ -11,7 +11,9 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.TimeWindows;
 import org.javatuples.Pair;
+import org.javatuples.Quintet;
 import org.javatuples.Sextet;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
@@ -56,7 +58,7 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
                 .join(positionReports.mapValues(v -> AccidentNotificationIntermediate.fromPosReport(v))
                                 .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("ACC_DET_POS")), (value1, value2) -> value2, JoinWindows.of(context.topic("ACC_NOT_WINDOW")),
                        new DefaultSerde<>(), new Serdes.LongSerde(), new DefaultSerde<>())
-               .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue0(), context.getCurrentRuntimeInSeconds(), k.getSeg())));
+                .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getValue1(), context.getCurrentRuntimeInSeconds(), k.getSeg())));
 
     }
 

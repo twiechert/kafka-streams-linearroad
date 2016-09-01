@@ -41,10 +41,11 @@
             <artifactId>spring-boot-starter-logging</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.kafka</groupId>
+            <groupId>com.github.twiechert.kafka</groupId>
             <artifactId>kafka-streams</artifactId>
-            <version>0.10.0.1</version>
+            <version>494ab42</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
@@ -115,9 +116,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication</mainClass>
-                    <profiles>
-                        <profile>build</profile>
-                    </profiles>
                 </configuration>
                 <executions>
                     <execution>

@@ -121,6 +121,7 @@ public class LinearRoadKafkaBenchmarkApplication {
         public void run(String... var1) throws Exception {
             logger.debug("Using mode {}", context.getLinearRoadMode());
             KStreamBuilder builder = new KStreamBuilder();
+            context.setBuilder(builder);
             KTable<XwayVehicleDay, Double> tollHistoryTable = null;
 
             // historical info feeding
@@ -165,13 +166,13 @@ public class LinearRoadKafkaBenchmarkApplication {
                  * Building NOV stream
                  */
                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
-                if (context.isDebugMode()) numberOfVehiclesStream.print();
+                //  if (context.isDebugMode()) numberOfVehiclesStream.print();
 
                 /**
                  * Building LAV stream
                  */
                 KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
-                // if(context.isDebugMode())  latestAverageVelocityStream.print();
+                //    if(context.isDebugMode())  latestAverageVelocityStream.print();
 
                 /**
                  * Building Accident detection stream
@@ -184,12 +185,13 @@ public class LinearRoadKafkaBenchmarkApplication {
                  */
                 KStream<Void, AccidentNotification> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
                 accidentNotificationStream.writeAsText("output/" + accidentNotificationStreamBuilder.getOutputTopic() + ".csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
-                //accidentNotificationStream.to(accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde(), accidentNotificationStreamBuilder.getOutputTopic());
 
                 /**
                  * Building current toll per Xway-Segmen-Directon tuple stream
                  */
                 KStream<XwaySegmentDirection, CurrentToll> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
+                if (context.isDebugMode()) currentTollStream.print();
+
                 //currentTollStream.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
 
                 /**
@@ -253,6 +255,7 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         private final Properties producerBaseConfig = new Properties();
 
+        private KStreamBuilder builder;
 
         @Value("${linearroad.hisotical.data.path}")
         private String historicalFilePath;
@@ -271,6 +274,9 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         @Value("${linearroad.zookeeper.server}")
         private String zookeeperServer;
+
+        @Value("${spring.profiles.active}")
+        private String env;
 
         @Value("${linearroad.mode}")
         private String linearRoadMode;
@@ -291,7 +297,7 @@ public class LinearRoadKafkaBenchmarkApplication {
         @PostConstruct
         private void initializeBaseConfig() {
             logger.debug("Configured kafka servers are {} and zookeeper {}", bootstrapServers, zookeeperServer);
-            logger.debug("Application Id is {}", applicationId);
+            logger.debug("Application Id is {} and running in env {}", applicationId, env);
             streamBaseConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "linearroad-benchmark-" + this.getApplicationId());
             streamBaseConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
             streamBaseConfig.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, zookeeperServer);
@@ -346,6 +352,14 @@ public class LinearRoadKafkaBenchmarkApplication {
 
         public boolean isDebugMode() {
             return debugMode;
+        }
+
+        public KStreamBuilder getBuilder() {
+            return builder;
+        }
+
+        public void setBuilder(KStreamBuilder builder) {
+            this.builder = builder;
         }
     }
 

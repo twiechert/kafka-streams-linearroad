@@ -17,7 +17,7 @@ public class Util {
 
 
     public static long minuteOfReport(long timestamp) {
-        return (timestamp/60)+1;
+        return (timestamp % 60 == 0) ? (timestamp / 60) : (timestamp / 60) + 1;
     }
 
     public static int dayOfReport(long timestamp) {
