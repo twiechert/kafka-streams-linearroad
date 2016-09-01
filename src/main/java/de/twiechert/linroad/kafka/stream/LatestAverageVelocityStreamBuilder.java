@@ -8,6 +8,7 @@ import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import de.twiechert.linroad.kafka.stream.processor.ComparableSlidingWindowWrapper;
 import de.twiechert.linroad.kafka.stream.processor.Punctuator;
+import de.twiechert.linroad.kafka.stream.windowing.LavWindow;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.TimeWindows;
@@ -45,7 +46,7 @@ public class LatestAverageVelocityStreamBuilder {
 
     public KStream<XwaySegmentDirection, AverageVelocity> getStream(KStream<XwaySegmentDirection, PositionReport> positionReportStream) {
         logger.debug("Building stream to identify latest average velocity");
-        TimeWindows lavWindow = TimeWindows.of(context.topic("LAV_WINDOW"), 5 * 60).advanceBy(60);
+        LavWindow lavWindow = LavWindow.of(context.topic("LAV_WINDOW"));
 
         return positionReportStream.mapValues(v -> new Pair<>(v.getSpeed(), v.getTime()))
                 .aggregateByKey(() -> new LatestAverageVelocityIntermediate(0l, 0, 0d),
@@ -54,20 +55,8 @@ public class LatestAverageVelocityStreamBuilder {
                             return new LatestAverageVelocityIntermediate(value.getValue1(), n, agg.getValue2() * (((double) n - 1) / n) + (double) value.getValue0() / n);
                         }, lavWindow, new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream()
-                .flatMap((k, v) -> {
-                    List<KeyValue<XwaySegmentDirection, AverageVelocity>> elements = new ArrayList<>();
-                    // special treatment for the first elements
-                    if (k.window().end() == 300l) {
-                        for (long i = (300); i >= v.getValue0(); i -= 60) {
-                            elements.add(new KeyValue<>(k.key(), new AverageVelocity(Util.minuteOfReport(i), v.getValue2())));
+                .map((k, v) -> new KeyValue<>(k.key(), new AverageVelocity(Util.minuteOfReport(k.window().end()), v.getValue2())));
 
-
-                        }
-                    } else {
-                        elements.add(new KeyValue<>(k.key(), new AverageVelocity(Util.minuteOfReport(k.window().end()), v.getValue2())));
-                    }
-                    return elements;
-                });
 
     }
 

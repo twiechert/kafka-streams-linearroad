@@ -172,7 +172,7 @@ public class LinearRoadKafkaBenchmarkApplication {
                  * Building LAV stream
                  */
                 KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
-                //    if(context.isDebugMode())  latestAverageVelocityStream.print();
+                if (context.isDebugMode()) latestAverageVelocityStream.print();
 
                 /**
                  * Building Accident detection stream
