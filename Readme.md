@@ -34,7 +34,11 @@ java -jar apps/kafka-streams-linearroad.jar \
 ```
 
 
-      ```
+## Serdes
+The benchmark is currently configured to use the [fast-serialization](https://github.com/RuedigerMoeller/fast-serialization) library, because in our conducted experiments in
+the fastest and most space efficient library from those, we have tested. You may replace this library and this repository already integrates
+Serde implementation for Jackson (with Smile Addon) and Kryio all located in `core.serde.provider`. In order to change the library system-wise, simply make
+the class `core.serde.DefaultSerde` extent a different Serde implementation.
 
 ## L-Rating and validation Files
 The files have been creates using [Linear Generator](https://github.com/walmart/LinearGenerator) and

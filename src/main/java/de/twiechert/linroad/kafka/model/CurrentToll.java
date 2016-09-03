@@ -8,19 +8,15 @@ import org.javatuples.Triplet;
  * Represents a toll valid in a segment bound to a certain minute and based on the average velocity in that segment.
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-public class CurrentToll extends Triplet<Long, Double, Double> {
+public class CurrentToll extends Triplet<Long, Double, Double> implements TimedOnMinute {
 
     public CurrentToll() {
     }
 
-    public CurrentToll(Long time, Double toll, Double velocity) {
-        super(time, toll, velocity);
+    public CurrentToll(Long minute, Double toll, Double velocity) {
+        super(minute, toll, velocity);
     }
 
-    @JsonIgnore
-    public long getTime() {
-        return getValue0();
-    }
 
     @JsonIgnore
     public double getToll() {
@@ -30,6 +26,12 @@ public class CurrentToll extends Triplet<Long, Double, Double> {
     @JsonIgnore
     public double getVelocity() {
         return getValue2();
+    }
+
+    @Override
+    @JsonIgnore
+    public long getMinute() {
+        return getValue0();
     }
 
     public static class Serde extends DefaultSerde<CurrentToll> {}

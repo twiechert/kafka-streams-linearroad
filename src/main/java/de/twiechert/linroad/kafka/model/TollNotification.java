@@ -42,16 +42,5 @@ public class TollNotification extends Sextet<Integer, Integer, Long, Long, Doubl
         return getValue5();
     }
 
-    //  @JsonIgnore
-    // public int getXway() {
-    //     return getValue6();
-    // }
-
-    /*
-    public TollNotification setXway(int xway) {
-        this.setAt6(xway);
-        return this;
-    }
-*/
 
 }

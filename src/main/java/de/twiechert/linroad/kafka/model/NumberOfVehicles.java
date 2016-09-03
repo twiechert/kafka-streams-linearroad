@@ -9,7 +9,7 @@ import java.io.Serializable;
  * Represents the number of distinct vehicles (in a certain segment) bound to a certain timestamp.
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-public class NumberOfVehicles extends Pair<Long, Integer> implements Serializable {
+public class NumberOfVehicles extends Pair<Long, Integer> implements Serializable, TimedOnMinute {
 
     public NumberOfVehicles() {
     }
@@ -19,12 +19,13 @@ public class NumberOfVehicles extends Pair<Long, Integer> implements Serializabl
     }
 
     @JsonIgnore
-    public Long getMinute() {
+    @Override
+    public long getMinute() {
         return getValue0();
     }
 
     @JsonIgnore
-    public Integer getNumber() {
+    public Integer getNumberOfVehicles() {
         return getValue1();
     }
 

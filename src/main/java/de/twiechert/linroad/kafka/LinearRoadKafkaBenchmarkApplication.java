@@ -204,6 +204,7 @@ public class LinearRoadKafkaBenchmarkApplication {
                  */
                 // this table may be derived from the above (how to realize in Kafka streams?)
                 KTable<Integer, ExpenditureAt> tollPerVehicleTable = currentExpenditurePerVehicleTableBuilder.getStream(segmentCrossingPositionReportStream, currentTollStream);
+                if (context.getDebugList().contains("CURR_TOLL_TAB")) tollPerVehicleTable.print();
 
                 /**
                  * Building stream to answer account balance requests

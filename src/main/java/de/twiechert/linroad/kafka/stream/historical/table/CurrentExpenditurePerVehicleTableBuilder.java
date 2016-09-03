@@ -20,8 +20,9 @@ import org.springframework.stereotype.Component;
 
 
 /**
- * This class transforms the toll notification stream to a table that holds the current cumulated expenditures per vehicle.
- * Note:
+ * This class creates a table that holds the sum of expenditures during the simulation until know.
+ * An update of that table is triggered by the segment-crossing
+ *
  * "Every time a vehicle issues its first position report from a seg- ment, a toll for that segment is calculated and the vehicle is notified of that toll.
  * Every time a position report identifies a vehicle as crossing from one segment into another,
  * the toll reported for the segment being exited is assessed to the vehicle’s account.
@@ -38,6 +39,8 @@ public class CurrentExpenditurePerVehicleTableBuilder {
     public KTable<Integer, ExpenditureAt> getStream(KStream<VehicleIdXwayDirection, SegmentCrossing> consecutivePositionReports,
                                                     KStream<XwaySegmentDirection, CurrentToll> currentTollStream) {
 
+
+        // instead
         return consecutivePositionReports
                 /**
                  * When position report for change to segment s, we need to assses segment s-1 and for that we need
@@ -47,16 +50,28 @@ public class CurrentExpenditurePerVehicleTableBuilder {
                         new TollNotificationStreamBuilder.ConsecutivePosReportIntermediate(Util.minuteOfReport(v.getPredecessorTime()), v.getTime(), k.getVehicleId())))
 
                 .through(new DefaultSerde<>(), new DefaultSerde<>(), "SEG_CROSSINGS_SEG_SHIFTED")
-                .join(currentTollStream, (psRep, currToll) -> new Pair<>(psRep.getVehicleId(), currToll.getToll()),
+                .join(currentTollStream, (psRep, currToll) -> new CurrentExpenditureIntermediate(psRep.getVehicleId(), currToll.getToll()),
 
                         JoinWindows.of("SEG_CROSSINGS_SEG_SHIFTED_CURR_TOLL_WINDOW"), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
-                .map((k, v) -> new KeyValue<>(v.getValue0(), v.getValue1()))
-
-                .aggregateByKey(() -> new ExpenditureAt(0L, 0d), (key, value, aggregat) -> {
-
-                            return new ExpenditureAt(LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(), aggregat.getExpenditure() + value);
-                        }
-                        , new Serdes.IntegerSerde(), new DefaultSerde<>(), "CURR_TOLL_PER_VEH_WINDOW")
+                .map((k, v) -> new KeyValue<>(v.getVehicleId(), v.getToll()))
+                .aggregateByKey(() -> new ExpenditureAt(0L, 0d),
+                        (key, value, agg) -> new ExpenditureAt(LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(), agg.getExpenditure() + value),
+                        new Serdes.IntegerSerde(), new DefaultSerde<>(), "CURR_TOLL_PER_VEH_WINDOW")
                 .through(new Serdes.IntegerSerde(), new DefaultSerde<>(), "CURR_TOLL_PER_VEH");
     }
+
+    public static class CurrentExpenditureIntermediate extends Pair<Integer, Double> {
+        public CurrentExpenditureIntermediate(Integer vehicleId, Double toll) {
+            super(vehicleId, toll);
+        }
+
+        public int getVehicleId() {
+            return getValue0();
+        }
+
+        public double getToll() {
+            return getValue1();
+        }
+    }
+
 }

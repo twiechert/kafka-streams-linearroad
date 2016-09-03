@@ -72,7 +72,7 @@ public class AccidentDetectionStreamBuilder {
                 .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("ACC_DETECTION"));
 
 
-        //  return Punctuator.getForSliding(context.getBuilder(), accDetectionStream, accDetectionWindow, new DefaultSerde<>(), new DefaultSerde<>(), "LATEST_ACC")
+        //  return OnMinuteChangeEmitter.getForSliding(context.getBuilder(), accDetectionStream, accDetectionWindow, new DefaultSerde<>(), new DefaultSerde<>(), "LATEST_ACC")
 
     }
 

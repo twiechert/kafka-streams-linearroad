@@ -9,22 +9,22 @@ import java.io.Serializable;
  * Represents an average velocity bound to a certain timestamp.
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-public class AverageVelocity extends Pair<Long, Double> implements Serializable {
+public class AverageVelocity extends Pair<Long, Double> implements Serializable, TimedOnMinute {
 
     public AverageVelocity() {
     }
 
-    public AverageVelocity(Long time, Double velocity) {
-        super(time, velocity);
+    public AverageVelocity(Long minute, Double velocity) {
+        super(minute, velocity);
     }
 
     @JsonIgnore
-    public Long getMinute() {
+    public long getMinute() {
         return getValue0();
     }
 
     @JsonIgnore
-    public Double getAverageSpeed() {
+    public double getAverageSpeed() {
         return getValue1();
     }
 

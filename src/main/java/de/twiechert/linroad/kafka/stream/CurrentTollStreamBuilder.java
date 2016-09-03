@@ -1,13 +1,12 @@
 package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
+import de.twiechert.linroad.kafka.stream.processor.OnMinuteChangeEmitter;
 import de.twiechert.linroad.kafka.model.*;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
 import org.javatuples.Quartet;
-import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,26 +38,26 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
 
 
-        return latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
+        //  KStream<XwaySegmentDirection, CurrentToll> xwaySegmentDirectionCurrentTollKStream =
+
+
+        KStream<XwaySegmentDirection, CurrentTollIntermediate> joinedTollCalculationStream = latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
                 .join(numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("NOV_TOLL")),
-                        (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
+                        (value1, value2) -> new CurrentTollIntermediate(value1.getMinute(), value1.getAverageSpeed(), value2.getNumberOfVehicles()),
                         JoinWindows.of(context.topic("LAV-NOV-WINDOW")), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
                 .leftJoin(accidentDetectionStream,
-                        (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 == null),
+                        (value1, value2) -> value1.setNoAccident(value2 == null),
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
-                        new DefaultSerde<>(), new DefaultSerde<>())
-                .mapValues(v -> {
+                        new DefaultSerde<>(), new DefaultSerde<>());
 
-                    // logger.debug("Minute {} Accident {}, Speed {}, NOV {}",v.getValue0(),  v.getValue3(), v.getValue1(), v.getValue2());
-                    // accident --> no toll
-                    if (v.getValue3() && v.getValue1() < 40 && v.getValue2() > 50)
-                        return new CurrentToll(Util.minuteOfReport(v.getValue0()) + 1, 2 * Math.pow(v.getValue2() - 50, 2), v.getValue1());
-                    else
-                        return new CurrentToll(Util.minuteOfReport(v.getValue0()) + 1, 0d, v.getValue1());
+        // only take latest aggs...
+        return OnMinuteChangeEmitter.get(context.getBuilder(), joinedTollCalculationStream, new DefaultSerde<>(), new DefaultSerde<>(), "latest-toll")
 
-                });
-
+                // if no toll, simply do not emmit -> the specification is in that regard not explicit enough
+                .filter((k, v) -> v.hasNoAccident() && v.getAverageVelocity() < 40 && v.getNumberOfVehicles() > 50)
+                // otherwise calculate toll
+                .mapValues(CurrentTollIntermediate::calculateCurrentToll);
     }
 
 
@@ -67,5 +66,41 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
         return TOPIC;
     }
 
+
+    public static class CurrentTollIntermediate extends Quartet<Long, Double, Integer, Boolean> implements TimedOnMinute {
+
+
+        public CurrentTollIntermediate(Long minute, Double averageVelocity, Integer numberOfVehicles) {
+            super(minute, averageVelocity, numberOfVehicles, true);
+        }
+
+        public CurrentTollIntermediate setNoAccident(boolean noAccident) {
+            this.setAt3(noAccident);
+            return this;
+        }
+
+        public CurrentToll calculateCurrentToll() {
+            return new CurrentToll(this.getMinute() + 1, 2 * Math.pow(this.getNumberOfVehicles() - 50, 2), this.getAverageVelocity());
+        }
+
+
+        public long getMinute() {
+            return getValue0();
+        }
+
+        public double getAverageVelocity() {
+            return getValue1();
+        }
+
+        public int getNumberOfVehicles() {
+            return getValue2();
+        }
+
+        public boolean hasNoAccident() {
+            return getValue3();
+        }
+
+
+    }
 
 }
