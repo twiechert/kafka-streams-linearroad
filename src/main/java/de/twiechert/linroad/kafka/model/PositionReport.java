@@ -8,14 +8,11 @@ import org.javatuples.Quintet;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 29.07.16.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class PositionReport extends Quintet<Long, Integer, Integer, Integer, Integer> implements Serializable {
 
-
-
     public PositionReport() {
-
     }
 
     public PositionReport(Long time, Integer vehicleId, Integer speed, Integer lane, Integer pos) {

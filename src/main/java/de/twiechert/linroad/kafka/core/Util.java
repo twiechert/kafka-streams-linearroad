@@ -1,48 +1,48 @@
 package de.twiechert.linroad.kafka.core;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import org.joda.time.Seconds;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.lang.reflect.ParameterizedType;
 
 /**
- * Created by tafyun on 01.06.16.
+ * Provides common LR-related functionality.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-@Component
 public class Util {
 
-
-
+    /**
+     * Given a timestamp in seconds, this method will return the execution method according to the LR specification
+     * @param timestamp a tuple's timestamp
+     * @return the execution method of the respective tuple
+     */
     public static long minuteOfReport(long timestamp) {
         return (timestamp % 60 == 0) ? (timestamp / 60) : (timestamp / 60) + 1;
     }
 
-    public static int dayOfReport(long timestamp) {
-        return Seconds.seconds((int) timestamp).toStandardDays().getDays();
+    /**
+     * Converts a String to an Integer
+     * @param str the string to convert
+     * @return the integer value
+     */
+    public static Integer pInt(String str) {
+        return Integer.parseInt(str.trim());
+    }
+
+    /**
+     * Converts a String to an Long
+     * @param str the string to convert
+     * @return the long value
+     */
+    public static Long pLng(String str) {
+        return Long.parseLong(str.trim());
+    }
+
+    /**
+     * Converts a String to a Double
+     * @param str the string to convert
+     * @return the double value
+     */
+    public static Double pDob(String str) {
+        return Double.parseDouble(str.trim());
     }
 
 
-    public static String str(Object ob) {
-        return ob.toString();
-    }
-
-    public static Integer pInt(String ob) {
-        return Integer.parseInt(ob);
-    }
-
-
-    public static Long pLng(String ob) {
-        return Long.parseLong(ob);
-    }
-
-    public static Double pDob(String ob) {
-        return Double.parseDouble(ob);
-    }
-
-    public static <T> Class<T> convert(TypeReference<T> ref) {
-        return (Class<T>) ((ParameterizedType) ref.getType()).getRawType();
-    }
 }

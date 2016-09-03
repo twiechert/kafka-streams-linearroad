@@ -48,7 +48,6 @@ public class LatestValueExtractor {
 
     public void reduceCsv() throws IOException {
         String line = "";
-        ;
         List<String> lineList;
         String identifier = "";
         do {

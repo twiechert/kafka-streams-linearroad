@@ -5,7 +5,8 @@ import org.apache.kafka.streams.processor.TimestampExtractor;
 import org.javatuples.Tuple;
 
 /**
- * This class is able to extract timestamps from tuples
+ * This class is able to extract timestamps from tuples.
+ * For that purpose you specify, if the timestamp is read from the key or value and the position within the tuple (beginning with 0)
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class TupleTimestampExtrator extends FallbackTimestampExtractor implements TimestampExtractor {
@@ -15,6 +16,11 @@ public class TupleTimestampExtrator extends FallbackTimestampExtractor implement
 
     private final int pos;
 
+    /**
+     *
+     * @param keyValue the part of the message to extract the timestamp from
+     * @param pos the position to extract the timestamp from
+     */
     public TupleTimestampExtrator(KeyValue keyValue, int pos) {
         this.keyValue = keyValue;
         this.pos = pos;

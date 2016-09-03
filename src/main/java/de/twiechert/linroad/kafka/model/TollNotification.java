@@ -1,8 +1,6 @@
 package de.twiechert.linroad.kafka.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
-import org.javatuples.Septet;
 import org.javatuples.Sextet;
 
 /**
@@ -14,8 +12,6 @@ public class TollNotification extends Sextet<Integer, Integer, Long, Long, Doubl
         super(0, vehicleId, reqTime, emitTime, velocity, toll);
         // the xway is not required in the output tuple, but we use this stream for further table processing
     }
-
-
 
     public TollNotification() {
 

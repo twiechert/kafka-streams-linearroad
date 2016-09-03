@@ -5,11 +5,9 @@ import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
-import de.twiechert.linroad.kafka.stream.processor.Punctuator;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.kstream.Windowed;
 import org.javatuples.Pair;
 import org.javatuples.Quintet;
 import org.slf4j.Logger;
@@ -49,7 +47,7 @@ public class AccidentDetectionStreamBuilder {
                 new Pair<>(value.getTime(), value.getVehicleId())))
                 // current time to use | if more than one vehicle in window | current count of position reports in window
 
-                .aggregateByKey(() -> new AccidentDetectionValIntermediate(0l, new HashMap<>()),
+                .aggregateByKey(() -> new AccidentDetectionValIntermediate(0L, new HashMap<>()),
                         (key, value, aggregat) -> {
                             if (!aggregat.getVehicleMap().containsKey(value.getValue1())) {
                                 aggregat.getVehicleMap().put(value.getValue1(), 1);
@@ -70,7 +68,8 @@ public class AccidentDetectionStreamBuilder {
                 // key -> xway, segment, direction | value -> minute in which accident has been detected
                 .flatMap((key, value0) ->
                         IntStream.of(4).mapToObj(in -> new KeyValue<>(new XwaySegmentDirection(key.key().getValue0(), ((key.key().getValue3() - in) < 0) ? 0 : key.key().getValue3() - in, key.key().getValue2()),
-                                Util.minuteOfReport(key.window().end()))).collect(Collectors.toList()));
+                                Util.minuteOfReport(key.window().end()))).collect(Collectors.toList()))
+                .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("ACC_DETECTION"));
 
 
         //  return Punctuator.getForSliding(context.getBuilder(), accDetectionStream, accDetectionWindow, new DefaultSerde<>(), new DefaultSerde<>(), "LATEST_ACC")

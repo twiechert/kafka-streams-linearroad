@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 
 /**
- * Created by tafyun on 03.08.16.
+ * This class reads the historical toll file and will feed the respective request handler with the lines.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
+ *
  */
 @Component
 public class HistoricalDataFeeder {
@@ -27,7 +30,6 @@ public class HistoricalDataFeeder {
     public HistoricalDataFeeder(LinearRoadKafkaBenchmarkApplication.Context context, TollHistoryRequestHandler tollHistoryRequestHandler) {
         this.tollHistoryRequestHandler = tollHistoryRequestHandler;
         this.filePath = context.getHistoricalFilePath();
-
     }
 
     public void startFeeding() throws Exception {
@@ -35,6 +37,7 @@ public class HistoricalDataFeeder {
         long linesProcessed = 0;
         try {
             while (iterator.hasNext()) {
+                // debug every 100000th line
                 if (linesProcessed % 100000 == 0) {
                     logger.debug("Processed {} 10^5 lines of historical data.", linesProcessed / 100000);
 

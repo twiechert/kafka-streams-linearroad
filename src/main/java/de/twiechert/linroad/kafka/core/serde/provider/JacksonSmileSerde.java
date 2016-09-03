@@ -37,7 +37,7 @@ public class JacksonSmileSerde<T extends Serializable> implements Serde<T> {
 
     @Override
     public Deserializer<T> deserializer() {
-        return new JsonDeserializer<T>(this.classOb, getObjectMapper());
+        return new JsonDeserializer<>(this.classOb, getObjectMapper());
     }
 
     @Override

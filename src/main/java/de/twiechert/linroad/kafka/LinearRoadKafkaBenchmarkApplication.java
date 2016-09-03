@@ -35,11 +35,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -54,16 +54,12 @@ public class LinearRoadKafkaBenchmarkApplication {
     private final static Logger logger = (Logger) LoggerFactory
             .getLogger(LinearRoadKafkaBenchmarkApplication.class);
 
-
     public static void main(String[] args) {
 
         SpringApplication.run(LinearRoadKafkaBenchmarkApplication.class, args);
     }
 
-
-
     @Component
-    @Profile("!build")
     public static class BenchmarkRunner implements CommandLineRunner {
 
         @Autowired
@@ -127,79 +123,78 @@ public class LinearRoadKafkaBenchmarkApplication {
             // historical info feeding
             if (!context.getLinearRoadMode().equals("no-historical-feed")) {
                 tollHistoryTable = tollHistoryTableBuilder.getTable(builder);
+                if (context.getDebugList().contains("TOLL_HIST")) tollHistoryTable.print();
+
             }
 
             // executing the actual benchmark
             if (!context.getLinearRoadMode().equals("no-benchmark")) {
 
-
                 // a certain delay is required, because kafka streams will fail if reading from non-existent topic...
 
                 logger.debug("Starting benchmark");
-
                 tollHistoryTable = (tollHistoryTable == null) ? tollHistoryTableBuilder.getExistingTable(builder) : tollHistoryTable;
-
 
                 /**
                  * Converting position reports to processable Kafka stream
                  */
                 KStream<XwaySegmentDirection, PositionReport> positionReportStream = positionReportStreamBuilder.getStream(builder);
-                // if(context.isDebugMode())  positionReportStream.print();
-
+                if (context.getDebugList().contains("POS_REP")) positionReportStream.print();
 
                 /**
-                 *
+                 * A reduced version of the position report stream, that only considers the first position report within a segment per vehicle.
+                 * This is required for both the accident and toll notification, which are only triggered, if a position report has no predecessor from the same segment.
                  */
                 KStream<VehicleIdXwayDirection, SegmentCrossing> segmentCrossingPositionReportStream = segmentCrossingPositionReportBuilder.getStream(positionReportStream);
-                // if(context.isDebugMode())  segmentCrossingPositionReportStream.print();
+                if (context.getDebugList().contains("POS_SEG")) segmentCrossingPositionReportStream.print();
 
                 /**
                  * Converting account balance request to processable Kafka stream
                  */
                 KStream<AccountBalanceRequest, Void> accountBalanceRequestStream = accountBalanceStreamBuilder.getStream(builder);
+                if (context.getDebugList().contains("ACCB_REQ")) accountBalanceRequestStream.print();
 
                 /**
                  * Converting daily expenditure request to processable Kafka stream
                  */
                 KStream<DailyExpenditureRequest, Void> dailyExpenditureRequestStream = dailyExpenditureRequestStreamBuilder.getStream(builder);
+                if (context.getDebugList().contains("DEXP_REQ")) dailyExpenditureRequestStream.print();
+
                 /**
                  * Building NOV stream
                  */
                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
-                //  if (context.isDebugMode()) numberOfVehiclesStream.print();
+                if (context.getDebugList().contains("NOV")) numberOfVehiclesStream.print();
 
                 /**
                  * Building LAV stream
                  */
                 KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
-                if (context.isDebugMode()) latestAverageVelocityStream.print();
+                if (context.getDebugList().contains("LAV")) latestAverageVelocityStream.print();
 
                 /**
                  * Building Accident detection stream
                  */
                 KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
-                if (context.isDebugMode()) accidentDetectionStream.print();
+                if (context.getDebugList().contains("ACC_DET")) accidentDetectionStream.print();
 
                 /**
                  * Building Accident notification stream
                  */
-                KStream<Void, AccidentNotification> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(positionReportStream, accidentDetectionStream);
+                KStream<Void, AccidentNotification> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(segmentCrossingPositionReportStream, accidentDetectionStream);
                 accidentNotificationStream.writeAsText("output/" + accidentNotificationStreamBuilder.getOutputTopic() + ".csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
 
                 /**
                  * Building current toll per Xway-Segmen-Directon tuple stream
                  */
                 KStream<XwaySegmentDirection, CurrentToll> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
-                if (context.isDebugMode()) currentTollStream.print();
-
-                //currentTollStream.to(currentTollStreamBuilder.getKeySerde(), currentTollStreamBuilder.getValueSerde(), currentTollStreamBuilder.getOutputTopic());
+                if (context.getDebugList().contains("CURR_TOLL")) currentTollStream.print();
 
                 /**
                  * Building stream to notify driver about tolls
                  */
                 KStream<Void, TollNotification> tollNotificationStream = tollNotificationStreamBuilder.getStream(segmentCrossingPositionReportStream, currentTollStream);
                 tollNotificationStream.writeAsText("output/" + tollNotificationStreamBuilder.getOutputTopic() + ".csv", tollNotificationStreamBuilder.getKeySerde(), tollNotificationStreamBuilder.getValueSerde());
-
 
 
                 /**
@@ -215,16 +210,12 @@ public class LinearRoadKafkaBenchmarkApplication {
                  */
                 KStream<Void, AccountBalanceResponse> accountBalanceResponseStream = accountBalanceResponseStreamBuilder.getStream(accountBalanceRequestStream, tollPerVehicleTable);
                 accountBalanceResponseStream.writeAsText("output/" + accountBalanceResponseStreamBuilder.getOutputTopic() + ".csv", accountBalanceResponseStreamBuilder.getKeySerde(), accountBalanceResponseStreamBuilder.getValueSerde());
-                // accountBalanceResponseStream.print();
 
                 /**
                  * Building stream to answer daily expenditure requests
                  */
                 KStream<Void, DailyExpenditureResponse> dailyExpenditureResponseStream = dailyExpenditureResponseStreamBuilder.getStream(dailyExpenditureRequestStream, tollHistoryTable);
                 dailyExpenditureResponseStream.writeAsText("output/" + dailyExpenditureResponseStreamBuilder.getOutputTopic() + ".csv", dailyExpenditureResponseStreamBuilder.getKeySerde(), dailyExpenditureResponseStreamBuilder.getValueSerde());
-                //dailyExpenditureResponseStream.print();
-
-
 
             }
 
@@ -263,8 +254,8 @@ public class LinearRoadKafkaBenchmarkApplication {
         @Value("${linearroad.data.path}")
         private String filePath;
 
-        @Value("${linearroad.mode.debug}")
-        private boolean debugMode;
+        @Value("#{'${linearroad.mode.debug}'.split(',')}")
+        private List<String> debugMode;
 
         @Value("${linearroad.datadriver.path}")
         private String dataDriverPath;
@@ -350,7 +341,7 @@ public class LinearRoadKafkaBenchmarkApplication {
             return dataDriverPath;
         }
 
-        public boolean isDebugMode() {
+        public List<String> getDebugList() {
             return debugMode;
         }
 

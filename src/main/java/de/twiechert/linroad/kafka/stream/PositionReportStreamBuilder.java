@@ -23,7 +23,6 @@ public class PositionReportStreamBuilder {
     private LinearRoadKafkaBenchmarkApplication.Context context;
 
     public KStream<XwaySegmentDirection, PositionReport> getStream(KStreamBuilder builder) {
-        KStream<XwaySegmentDirection, PositionReport> posStream = builder.stream(new DefaultSerde<>(), new DefaultSerde<>(), context.topic(PositionReportHandler.TOPIC));
-        return posStream;
+        return builder.stream(new DefaultSerde<>(), new DefaultSerde<>(), context.topic(PositionReportHandler.TOPIC));
     }
 }

@@ -5,7 +5,10 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 21.07.16.
+ * Kafka messages always have a key and a value but in some cases you only need either.
+ * In that case simply use the Void class for the key/value respectively.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class Void implements Serializable {
 

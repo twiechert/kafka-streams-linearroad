@@ -6,17 +6,16 @@ import org.javatuples.Pair;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 29.07.16.
+ * Represents the number of distinct vehicles (in a certain segment) bound to a certain timestamp.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class NumberOfVehicles extends Pair<Long, Integer> implements Serializable {
 
-
     public NumberOfVehicles() {
-
     }
 
-    public NumberOfVehicles(Long value0, Integer value1) {
-        super(value0, value1);
+    public NumberOfVehicles(Long time, Integer numberOfVehiles) {
+        super(time, numberOfVehiles);
     }
 
     @JsonIgnore

@@ -11,9 +11,10 @@ import static de.twiechert.linroad.kafka.core.Util.pInt;
 import static de.twiechert.linroad.kafka.core.Util.pLng;
 
 /**
- * Created by tafyun on 21.07.16.
+ * This class creates a Kafka topics for the account balance request.
  *
  * Key corresponds to (Time: t, VID: v, QID: q).
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
 public class AccountBalanceRequestHandler extends TupleHandler<AccountBalanceRequest, Void> {
@@ -28,7 +29,8 @@ public class AccountBalanceRequestHandler extends TupleHandler<AccountBalanceReq
 
     @Override
     protected AccountBalanceRequest transformKey(String[] tuple) {
-        return new AccountBalanceRequest(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]));
+        // consider strange field mapping in csv file --> there are a lot of dummy fields....
+        return new AccountBalanceRequest(pLng(tuple[1]), pInt(tuple[3]), pInt(tuple[9]));
     }
 
     @Override

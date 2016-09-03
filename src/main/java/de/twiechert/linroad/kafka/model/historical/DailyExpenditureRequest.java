@@ -5,7 +5,8 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quintet;
 
 /**
- * Created by tafyun on 02.08.16.
+ * This class represents
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class DailyExpenditureRequest extends Quintet<Long, Integer, Integer, Integer, Integer> {
 

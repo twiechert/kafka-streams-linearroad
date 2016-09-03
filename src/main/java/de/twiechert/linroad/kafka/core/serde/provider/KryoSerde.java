@@ -36,7 +36,6 @@ public class KryoSerde<T extends Serializable> implements Serde<T> {
                 return new Kryo();
             }
 
-            ;
         };
 
 
@@ -72,7 +71,6 @@ public class KryoSerde<T extends Serializable> implements Serde<T> {
                 return new Kryo();
             }
 
-            ;
         };
 
         public KryoDeserializer(Class<A> classOb) {

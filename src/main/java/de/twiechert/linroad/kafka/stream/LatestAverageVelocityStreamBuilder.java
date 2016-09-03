@@ -6,28 +6,15 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.AverageVelocity;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
-import de.twiechert.linroad.kafka.stream.processor.ComparableSlidingWindowWrapper;
-import de.twiechert.linroad.kafka.stream.processor.Punctuator;
 import de.twiechert.linroad.kafka.stream.windowing.LavWindow;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.kstream.Window;
-import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.TimeWindow;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
-
-import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
 
 /**
  * This class builds the stream of latest average velocities keyed by (expressway, segment, direction).
@@ -49,7 +36,7 @@ public class LatestAverageVelocityStreamBuilder {
         LavWindow lavWindow = LavWindow.of(context.topic("LAV_WINDOW"));
 
         return positionReportStream.mapValues(v -> new Pair<>(v.getSpeed(), v.getTime()))
-                .aggregateByKey(() -> new LatestAverageVelocityIntermediate(0l, 0, 0d),
+                .aggregateByKey(() -> new LatestAverageVelocityIntermediate(0L, 0, 0d),
                         (key, value, agg) -> {
                             int n = agg.getValue1() + 1;
                             return new LatestAverageVelocityIntermediate(value.getValue1(), n, agg.getValue2() * (((double) n - 1) / n) + (double) value.getValue0() / n);

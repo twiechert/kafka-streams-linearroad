@@ -13,6 +13,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
+ * This class feeds the respective kafka topics with LR tuples.
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
@@ -36,14 +37,12 @@ public class DataFeeder {
     private AccountBalanceRequestHandler accountBalanceRequestHandler;
 
     @Autowired
-    private MinuteTimer minuteTimer;
-
-    @Autowired
     private LinearRoadKafkaBenchmarkApplication.Context context;
 
 
     /**
      * This callback processes tuples generated from the native c implementation.
+     * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
      */
     public class TupleReceivedCallback implements DataDriverLibrary.TupleReceivedCallback {
 
@@ -59,26 +58,20 @@ public class DataFeeder {
             Arrays.stream(this.tupleHandlers).forEach(TupleHandler::close);
         }
 
-        public void invoke(String s) {
+        /**
+         * This method is called for every line emitted by the data driver.
+         * @param line the line representing a LR tuple
+         */
+        public void invoke(String line) {
             if (!firstArived) {
-                this.context.markAsStarted();
-                //this.startMinuteFeeder();
+                logger.debug("First element has arrived, starting timer.");
+                LinearRoadKafkaBenchmarkApplication.Context.markAsStarted();
                 firstArived = true;
             }
-            String[] tuple = s.split(",");
+            String[] tuple = line.split(",");
+            // find a tuple handler that is able to process that tuple
             Arrays.stream(this.tupleHandlers).forEach(tupleHandler -> tupleHandler.handle(tuple));
         }
-
-        @Async
-        private void startMinuteFeeder() {
-            new Timer().scheduleAtFixedRate(new TimerTask() {
-                public void run() {
-                    minuteTimer.handle(null);
-                }
-            }, 0, 60 * 1000);
-
-        }
-
     }
 
     @Autowired
@@ -87,19 +80,14 @@ public class DataFeeder {
         this.filePath = context.getFilePath();
     }
 
-    @Async
-    public void startFeedingAsync() {
-        new TupleReceivedCallback(context, positionReportHandler,
-                dailyExpenditureRequestHandler,
-                accountBalanceRequestHandler);
-
-    }
-
+    /**
+     * Will start feeding the Kafka topics with the respective LR tuples.
+     * This method is synchronous. You may add @Async to allow asynchronous execution.
+     */
     public void startFeeding() {
         new TupleReceivedCallback(context, positionReportHandler,
                 dailyExpenditureRequestHandler,
                 accountBalanceRequestHandler);
-
     }
 
 }

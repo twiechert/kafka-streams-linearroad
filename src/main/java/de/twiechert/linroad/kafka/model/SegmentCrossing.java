@@ -1,12 +1,12 @@
 package de.twiechert.linroad.kafka.model;
 
 import org.javatuples.Quartet;
-import org.javatuples.Triplet;
 
 /**
  * Created by tafyun on 17.08.16.
  */
 public class SegmentCrossing extends Quartet<Long, Integer, Integer, Long> {
+
 
     public SegmentCrossing(Long time, Integer segment, Integer lane, Long predecessorTime) {
         super(time, segment, lane, predecessorTime);

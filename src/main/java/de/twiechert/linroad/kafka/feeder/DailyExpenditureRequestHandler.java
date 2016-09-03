@@ -11,9 +11,10 @@ import static de.twiechert.linroad.kafka.core.Util.pInt;
 import static de.twiechert.linroad.kafka.core.Util.pLng;
 
 /**
- * Created by tafyun on 21.07.16.
+ * This class creates a Kafka topic for the daily expenditure requests.
  *
- * Key corresponds to (Time: t, VID: v, QID: q, XWay: x, Day: n).
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
+ *
  */
 @Component
 public class DailyExpenditureRequestHandler extends TupleHandler<DailyExpenditureRequest, Void> {
@@ -27,7 +28,8 @@ public class DailyExpenditureRequestHandler extends TupleHandler<DailyExpenditur
 
     @Override
     protected DailyExpenditureRequest transformKey(String[] tuple) {
-        return new DailyExpenditureRequest(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[3]), pInt(tuple[4]), pInt(tuple[5]));
+        // consider strange field mapping in csv file --> there are a lot of dummy fields....
+        return new DailyExpenditureRequest(pLng(tuple[1]), pInt(tuple[2]), pInt(tuple[9]), pInt(tuple[4]), pInt(tuple[14]));
     }
 
     @Override

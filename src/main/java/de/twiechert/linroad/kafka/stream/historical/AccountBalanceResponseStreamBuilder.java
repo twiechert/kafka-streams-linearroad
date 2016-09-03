@@ -12,7 +12,6 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
-import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,8 +27,8 @@ public class AccountBalanceResponseStreamBuilder extends StreamBuilder<Void, Acc
     public final static String TOPIC = "ACCOUNT_BALANCE_RESP";
 
     @Autowired
-    public AccountBalanceResponseStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util);
+    public AccountBalanceResponseStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context) {
+        super(context);
     }
 
     public KStream<Void, AccountBalanceResponse> getStream(KStream<AccountBalanceRequest, Void> accountBalanceRequestStream,
@@ -43,7 +42,7 @@ public class AccountBalanceResponseStreamBuilder extends StreamBuilder<Void, Acc
 
         return accountBalanceRequestsPerVehicle.leftJoin(currentTollTable,
                 (accValue, tollVal) -> new AccountBalanceResponse(accValue.getRequestTime(),
-                        context.getCurrentRuntimeInSeconds(),
+                        LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(),
                         (tollVal == null) ?
                                 -1 :
                                 tollVal.getValue0(),

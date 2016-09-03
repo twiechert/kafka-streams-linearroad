@@ -6,13 +6,9 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
-import de.twiechert.linroad.kafka.stream.processor.Punctuator;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.processor.Processor;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.ProcessorSupplier;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
-
-import static de.twiechert.linroad.kafka.core.Util.minuteOfReport;
 
 
 /**

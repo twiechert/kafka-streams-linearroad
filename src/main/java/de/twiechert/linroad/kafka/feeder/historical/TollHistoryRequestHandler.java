@@ -12,7 +12,8 @@ import static de.twiechert.linroad.kafka.core.Util.pDob;
 import static de.twiechert.linroad.kafka.core.Util.pInt;
 
 /**
- * Created by tafyun on 03.08.16.
+ * This class handles a toll history tuple by sending it to the respective Kafka topic.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
 public class TollHistoryRequestHandler extends TupleHandler<XwayVehicleDay, Double> {

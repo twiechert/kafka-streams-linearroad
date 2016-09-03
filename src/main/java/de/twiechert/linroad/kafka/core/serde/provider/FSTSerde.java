@@ -12,12 +12,14 @@ import org.nustaq.serialization.FSTConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Created by tafyun on 07.08.16.
+ * This Serde implementation uses the fast serializer library (https://github.com/RuedigerMoeller/fast-serialization).
+ * During first experiments, this library performed very well.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class FSTSerde<T extends Serializable> implements Serde<T> {
 

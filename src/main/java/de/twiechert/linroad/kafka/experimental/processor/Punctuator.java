@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.stream.processor;
+package de.twiechert.linroad.kafka.experimental.processor;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.streams.KeyValue;
@@ -245,7 +245,7 @@ public class Punctuator {
             //   KeyValueIterator<ComparableSlidingWindowWrapper<K>, V> iter = this.kvStore.all();
             KeyValueIterator<ComparableSlidingWindowWrapper<K>, V> iter =
                     //  this.kvStore.range(new ComparableSlidingWindowWrapper(((timestamp-windows.size) > 0 ) ? timestamp-windows.advance: 0), new ComparableSlidingWindowWrapper(timestamp));
-                    this.kvStore.range(new ComparableSlidingWindowWrapper<K>(matchedWindow - 1), new ComparableSlidingWindowWrapper<K>(matchedWindow + 1));
+                    this.kvStore.range(new ComparableSlidingWindowWrapper<>(matchedWindow - 1), new ComparableSlidingWindowWrapper<>(matchedWindow + 1));
             int i = 0;
             while (iter.hasNext()) {
                 i++;
@@ -265,7 +265,7 @@ public class Punctuator {
 
         private void cleanOld(long odlerThen) {
             logger.debug("deleting older than {}", odlerThen);
-            KeyValueIterator<ComparableSlidingWindowWrapper<K>, V> iter = this.kvStore.range(new ComparableSlidingWindowWrapper<K>(0), new ComparableSlidingWindowWrapper<K>(odlerThen + 1));
+            KeyValueIterator<ComparableSlidingWindowWrapper<K>, V> iter = this.kvStore.range(new ComparableSlidingWindowWrapper<>(0), new ComparableSlidingWindowWrapper<>(odlerThen + 1));
             while (iter.hasNext()) {
                 KeyValue<ComparableSlidingWindowWrapper<K>, V> entry = iter.next();
                 context.forward(entry.key.getKey(), new Pair<>(entry.key.getEnd(), entry.value));
@@ -336,7 +336,7 @@ public class Punctuator {
             //   KeyValueIterator<ComparableSlidingWindowWrapper<K>, V> iter = this.kvStore.all();
             KeyValueIterator<ComparableSlidingWindowWrapper<K>, V> iter =
                     //  this.kvStore.range(new ComparableSlidingWindowWrapper(((timestamp-windows.size) > 0 ) ? timestamp-windows.advance: 0), new ComparableSlidingWindowWrapper(timestamp));
-                    this.kvStore.range(new ComparableSlidingWindowWrapper<K>(matchedWindow - 1), new ComparableSlidingWindowWrapper<K>(matchedWindow + 1));
+                    this.kvStore.range(new ComparableSlidingWindowWrapper<>(matchedWindow - 1), new ComparableSlidingWindowWrapper<>(matchedWindow + 1));
 
             while (iter.hasNext()) {
                 KeyValue<ComparableSlidingWindowWrapper<K>, V> entry = iter.next();

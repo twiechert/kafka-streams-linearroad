@@ -6,7 +6,10 @@ import org.apache.kafka.common.serialization.Serializer;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 04.08.16.
+ * This class extends the currently used default Serde.
+ * When you change the super-class, Kafka will use that implementation.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class DefaultSerde<T extends Serializable> extends FSTSerde<T> {
 

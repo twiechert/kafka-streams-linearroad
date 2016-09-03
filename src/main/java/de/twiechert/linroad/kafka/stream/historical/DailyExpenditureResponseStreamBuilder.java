@@ -26,8 +26,8 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
 
 
     @Autowired
-    public DailyExpenditureResponseStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util);
+    public DailyExpenditureResponseStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context) {
+        super(context);
     }
 
     public KStream<Void, DailyExpenditureResponse> getStream(KStream<DailyExpenditureRequest, Void> dailyExpenditureRequestStream,
@@ -35,7 +35,7 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
 
         /**
          * "...such that Type identifies this tuple as an daily expenditure request, Time is the time of the request, VID is the vehicle making the request, QID is the query identifier,
-         * and XWay and Day (1 . . .69) identify the expressway and the day (1 is yesterday, 69 is 10 weeks ago) for which an expenditure total is desired. Travel time requests are tuples of the form..."
+         * and XWay and Day (1 . . .69) identify the expressway and the day (1 is yesterday, 69 is 10 weeks ago) for which an expenditure total is desired. ."
          */
         KStream<XwayVehicleDay, DailyExpenditureRequest> accountBalanceRequestsPerVehicleXwayAndDay =
                 dailyExpenditureRequestStream.map((k, v) -> new KeyValue<>(new XwayVehicleDay(k.getXWay(), k.getVehicleId(), k.getDay()), k))
@@ -43,7 +43,7 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
 
 
         return accountBalanceRequestsPerVehicleXwayAndDay.leftJoin(tollHistory,
-                (dayRequest, currToll) -> new DailyExpenditureResponse(dayRequest.getRequestTime(), this.context.getCurrentRuntimeInSeconds(), dayRequest.getQueryId(), (currToll == null) ? 0 : currToll)
+                (dayRequest, currToll) -> new DailyExpenditureResponse(dayRequest.getRequestTime(), LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(), dayRequest.getQueryId(), (currToll == null) ? 0 : currToll)
         )
                 .selectKey((k, v) -> new Void());
     }

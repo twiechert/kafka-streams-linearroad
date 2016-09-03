@@ -1,6 +1,5 @@
-package de.twiechert.linroad.kafka.stream.processor;
+package de.twiechert.linroad.kafka.experimental.processor;
 
-import org.apache.kafka.streams.kstream.Window;
 import org.apache.kafka.streams.kstream.Windowed;
 
 import java.io.Serializable;

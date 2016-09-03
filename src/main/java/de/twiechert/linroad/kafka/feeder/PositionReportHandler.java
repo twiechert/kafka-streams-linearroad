@@ -14,8 +14,9 @@ import static de.twiechert.linroad.kafka.core.Util.pInt;
 import static de.twiechert.linroad.kafka.core.Util.pLng;
 
 /**
- * Created by tafyun on 21.07.16.
- * // (Type = 0, Time, VID, Spd, XWay, Lane, Dir, Seg, Pos) key -> Type = 0, Time, VID,  | value -> Time, VID, Spd, Lane, Pos*
+ * This class creates a Kafka topics for the position reports
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com> *
  */
 @Component
 public class PositionReportHandler extends TupleHandler<XwaySegmentDirection, PositionReport> {

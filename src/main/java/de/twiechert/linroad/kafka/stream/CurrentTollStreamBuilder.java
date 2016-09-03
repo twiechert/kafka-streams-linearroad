@@ -3,12 +3,7 @@ package de.twiechert.linroad.kafka.stream;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
-import de.twiechert.linroad.kafka.model.AverageVelocity;
-import de.twiechert.linroad.kafka.model.CurrentToll;
-import de.twiechert.linroad.kafka.model.NumberOfVehicles;
-import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
-import de.twiechert.linroad.kafka.stream.processor.Punctuator;
-import org.apache.kafka.common.serialization.Serdes;
+import de.twiechert.linroad.kafka.model.*;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
 import org.javatuples.Quartet;
@@ -33,8 +28,8 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
             .getLogger(CurrentTollStreamBuilder.class);
 
     @Autowired
-    public CurrentTollStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context, Util util) {
-        super(context, util);
+    public CurrentTollStreamBuilder(LinearRoadKafkaBenchmarkApplication.Context context) {
+        super(context);
     }
 
 
@@ -49,7 +44,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         (value1, value2) -> new Triplet<>(value1.getValue0(), value1.getValue1(), value2.getValue1()),
                         JoinWindows.of(context.topic("LAV-NOV-WINDOW")), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
-                .leftJoin(accidentDetectionStream.through(new DefaultSerde<>(), new Serdes.LongSerde(), context.topic("ACC_TOLL")),
+                .leftJoin(accidentDetectionStream,
                         (value1, value2) -> new Quartet<>(value1.getValue0(), value1.getValue1(), value1.getValue2(), value2 == null),
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
                         new DefaultSerde<>(), new DefaultSerde<>())

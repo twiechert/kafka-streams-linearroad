@@ -6,22 +6,34 @@ streams. A general discussion of the benchmark components and how they be realiz
 Simply start the main method located in `LinearRoadKafkaBenchmark` and pass the the input path to the raw data file (e.g. `--data-path=/home/tafyun/IdeaProjects/linearroad-java-driver/src/main/resources/datafile20seconds.dat`)
 and the kafka nodes (e.g. `linearroad.kafka.bootstrapservers=172.17.0.2:9092, 172.17.0.3:9092, 172.17.0.4:9092 --linearroad.zookeeper.server=172.17.0.2:2181`) as program arguments.
 
-General notes have been collected here: https://github.com/twiechert/linear-road-general/wiki/Implementation-Guideline.
-## Container based deployment
-
-Quick and dirty setup
-https://hub.docker.com/r/ches/kafka/
-
-docker run -d \
-    --hostname localhost \
-    --name kafka \
-    --publish 9092:9092 --publish 7203:7203 \
-    --env KAFKA_ADVERTISED_HOST_NAME=127.0.0.1 --env ZOOKEEPER_IP=127.0.0.1 \ches/kafka
+### Starting the application
+For most configurations there are default values specified which can be overiden as shown below. Because the cluster profile is set active,
+the application-cluster.properties file has precedence and overrides the deault values specified in application.properties. If you execute the program as shown below, all stream tuples of the NOV and LAV
+stream will be printed.
 
 
+```
+java -jar apps/kafka-streams-linearroad.jar \
+--linearroad.data.path=/home/hadoop/linearroad/L1/car.dat \
+--linearroad.hisotical.data.path=/home/hadoop/linearroad/L1/car.dat.tolls.dat \
+--linearroad.kafka.bootstrapservers=localhost:9092 \
+--linearroad.mode.debug=NOV,LAV
+--spring.profiles.active=cluster
+```
 
-    zkCli.sh -cmd ls /brokers/ids
-    zkCli.sh -cmd get /brokers/ids/1
+If the historical toll table has already been feed, you can skip this part by callind instead
+
+```
+java -jar apps/kafka-streams-linearroad.jar \
+--linearroad.data.path=/home/hadoop/linearroad/L1/car.dat \
+--linearroad.hisotical.data.path=/home/hadoop/linearroad/L1/car.dat.tolls.dat \
+--linearroad.kafka.bootstrapservers=localhost:9092 \
+--linearroad.mode=no-historial-feed
+--linearroad.mode.debug=NOV,LAV
+--spring.profiles.active=cluster
+```
+
+
       ```
 
 ## L-Rating and validation Files
