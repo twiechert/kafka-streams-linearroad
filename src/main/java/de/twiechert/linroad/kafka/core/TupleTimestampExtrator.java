@@ -1,5 +1,6 @@
 package de.twiechert.linroad.kafka.core;
 
+import de.twiechert.linroad.kafka.model.TimedOnMinute;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.streams.processor.TimestampExtractor;
 import org.javatuples.Tuple;
@@ -34,14 +35,23 @@ public class TupleTimestampExtrator extends FallbackTimestampExtractor implement
     @Override
     public long extractTimestamp(ConsumerRecord<Object, Object> record) {
         if(keyValue.equals(KeyValue.Key)) {
-            if(record.key() instanceof Tuple)
-                return (long) ((Tuple) record.key()).getValue(pos);
-            else return (long)  record.key();
+            return this.extract(record.key());
 
         } else {
-            if(record.value() instanceof Tuple)
-                return (long) ((Tuple) record.value()).getValue(pos);
-            else return (long)  record.value();
+            return this.extract(record.value());
+
         }
+    }
+
+    private long extract(Object record) {
+        /**
+         * DO NOT CHANGE ORDER!! TUPLE EXTRACTION HAS PRESEDENCE
+         */
+        if (record instanceof Tuple)
+            return (long) ((Tuple) record).getValue(pos);
+
+        else if (record instanceof TimedOnMinute) {
+            return ((TimedOnMinute) record).getMinute();
+        } else return (long) record;
     }
 }

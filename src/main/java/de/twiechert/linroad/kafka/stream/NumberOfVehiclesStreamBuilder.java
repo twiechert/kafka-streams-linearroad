@@ -6,6 +6,7 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
+import de.twiechert.linroad.kafka.stream.processor.OnMinuteChangeEmitter;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.TimeWindows;
@@ -37,13 +38,15 @@ public class NumberOfVehiclesStreamBuilder {
     public KStream<XwaySegmentDirection, NumberOfVehicles> getStream(KStream<XwaySegmentDirection, PositionReport> positionReportStream) {
         logger.debug("Building stream to identify number of vehicles at expressway, segment and direction per minute.");
 
-        return positionReportStream.mapValues(v -> new Pair<>(v.getVehicleId(), v.getTime()))
+        KStream<XwaySegmentDirection, NumberOfVehicles> novAgg = positionReportStream.mapValues(v -> new Pair<>(v.getVehicleId(), v.getTime()))
                 // calculate rolling average and minute the average related to (count of elements in window, current average, related minute for toll calculation)
                 .aggregateByKey(() -> new VehicleIdTimeIntermediate(0L, new HashSet<>()), (key, value, agg) -> {
                     agg.getValue1().add(value.getValue0());
                     return new VehicleIdTimeIntermediate(value.getValue1(), agg.getValue1());
                 }, TimeWindows.of(context.topic("NOV_WINDOW"), 60), new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream().map((k, v) -> new KeyValue<>(k.key(), new NumberOfVehicles(Util.minuteOfReport(k.window().end()), v.getValue1().size())));
+
+        return OnMinuteChangeEmitter.get(context.getBuilder(), novAgg, new DefaultSerde<>(), new DefaultSerde<>(), "latest-nov");
 
     }
 

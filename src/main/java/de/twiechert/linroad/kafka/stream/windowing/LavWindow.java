@@ -1,8 +1,11 @@
 package de.twiechert.linroad.kafka.stream.windowing;
 
+import de.twiechert.linroad.kafka.stream.NumberOfVehiclesStreamBuilder;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windows;
 import org.apache.kafka.streams.kstream.internals.TimeWindow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +17,6 @@ import java.util.Map;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class LavWindow extends Windows<TimeWindow> {
-
-
 
     private final static long size = 300;
 
@@ -50,6 +51,7 @@ public class LavWindow extends Windows<TimeWindow> {
          * We need additionaly to consider the windows 0..4, 0..3, 0..2, 0..1 and check if the timestamp falls in these intervals
          */
         if (timestamp < 300) {
+
             for (long i = (300 - 60); i >= timestamp && i > 0; i -= 60) {
                 TimeWindow window = new TimeWindow(0L, i);
                 windows.put(0L, window);

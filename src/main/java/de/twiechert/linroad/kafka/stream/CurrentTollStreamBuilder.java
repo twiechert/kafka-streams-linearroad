@@ -41,9 +41,9 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
         //  KStream<XwaySegmentDirection, CurrentToll> xwaySegmentDirectionCurrentTollKStream =
 
 
-        KStream<XwaySegmentDirection, CurrentTollIntermediate> joinedTollCalculationStream = latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
-                .join(numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("NOV_TOLL")),
-                        (value1, value2) -> new CurrentTollIntermediate(value1.getMinute(), value1.getAverageSpeed(), value2.getNumberOfVehicles()),
+        KStream<XwaySegmentDirection, CurrentTollIntermediate> joinedTollCalculationStream = numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
+                .join(latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("NOV_TOLL")),
+                        (value1, value2) -> new CurrentTollIntermediate(value2.getMinute(), value2.getAverageSpeed(), value1.getNumberOfVehicles()),
                         JoinWindows.of(context.topic("LAV-NOV-WINDOW")), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
 
                 .leftJoin(accidentDetectionStream,
@@ -52,9 +52,9 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         new DefaultSerde<>(), new DefaultSerde<>());
 
         // only take latest aggs...
-        return OnMinuteChangeEmitter.get(context.getBuilder(), joinedTollCalculationStream, new DefaultSerde<>(), new DefaultSerde<>(), "latest-toll")
-
+        //return OnMinuteChangeEmitter.get(context.getBuilder(), joinedTollCalculationStream, new DefaultSerde<>(), new DefaultSerde<>(), "latest-toll")
                 // if no toll, simply do not emmit -> the specification is in that regard not explicit enough
+        return joinedTollCalculationStream
                 .filter((k, v) -> v.hasNoAccident() && v.getAverageVelocity() < 40 && v.getNumberOfVehicles() > 50)
                 // otherwise calculate toll
                 .mapValues(CurrentTollIntermediate::calculateCurrentToll);
@@ -74,9 +74,12 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
             super(minute, averageVelocity, numberOfVehicles, true);
         }
 
+        public CurrentTollIntermediate(Long minute, Double averageVelocity, Integer numberOfVehicles, Boolean noAccident) {
+            super(minute, averageVelocity, numberOfVehicles, noAccident);
+        }
+
         public CurrentTollIntermediate setNoAccident(boolean noAccident) {
-            this.setAt3(noAccident);
-            return this;
+            return new CurrentTollIntermediate(this.getValue0(), this.getValue1(), this.getValue2(), noAccident);
         }
 
         public CurrentToll calculateCurrentToll() {

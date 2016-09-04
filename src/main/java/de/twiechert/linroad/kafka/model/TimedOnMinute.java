@@ -6,4 +6,8 @@ package de.twiechert.linroad.kafka.model;
 public interface TimedOnMinute {
 
     long getMinute();
+
+    interface TimedOnMinuteWithWindowEnd extends TimedOnMinute {
+        long getWindowEndMinute();
+    }
 }
