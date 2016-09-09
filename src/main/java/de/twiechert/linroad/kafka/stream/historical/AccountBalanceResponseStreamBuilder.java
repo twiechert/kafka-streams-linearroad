@@ -32,8 +32,8 @@ public class AccountBalanceResponseStreamBuilder extends StreamBuilder<Void, Acc
 
     public KStream<Void, AccountBalanceResponse> getStream(KStream<AccountBalanceRequest, Void> accountBalanceRequestStream,
                                                            KTable<Integer, ExpenditureAt> currentTollTable) {
-        /**
-         * Change the key of the request stream such that we can aggregate on a per vehicle basis.
+        /*
+          Change the key of the request stream such that we can aggregate on a per vehicle basis.
          */
         KStream<Integer, AccountBalanceRequest> accountBalanceRequestsPerVehicle = accountBalanceRequestStream.map((k, v) -> new KeyValue<>(k.getVehicleID(), k))
                 .through(new Serdes.IntegerSerde(), new DefaultSerde<>(), context.topic("ACC_BALANCE_PER_VEHICLE"));
@@ -43,12 +43,12 @@ public class AccountBalanceResponseStreamBuilder extends StreamBuilder<Void, Acc
                 (accValue, tollVal) -> new AccountBalanceResponse(accValue.getRequestTime(),
                         LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(),
                         (tollVal == null) ?
-                                -1 :
-                                tollVal.getValue0(),
+                                -1L :
+                                tollVal.getTime(),
                         accValue.getQueryId(),
                         (tollVal == null) ?
-                                0 :
-                                tollVal.getValue1()))
+                                0D :
+                                tollVal.getExpenditure()))
                 .selectKey((k, v) -> new Void());
 
     }

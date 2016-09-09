@@ -5,11 +5,15 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quintet;
 
 /**
- * Created by tafyun on 02.08.16.
+ * This class represents the response object for the daily expenditure query (type 3).
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class DailyExpenditureResponse extends Quintet<Integer, Long, Long, Integer, Double> {
 
-
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public DailyExpenditureResponse() {
     }
 
@@ -37,12 +41,4 @@ public class DailyExpenditureResponse extends Quintet<Integer, Long, Long, Integ
         return getValue4();
     }
 
-
-    public static class Serde extends DefaultSerde<DailyExpenditureResponse> {
-
-    }
-
-    public static class Serializer
-            extends DefaultSerde.DefaultSerializer<DailyExpenditureResponse> {
-    }
 }

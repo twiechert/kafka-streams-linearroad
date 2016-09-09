@@ -10,6 +10,9 @@ import org.javatuples.Quintet;
  */
 public class DailyExpenditureRequest extends Quintet<Long, Integer, Integer, Integer, Integer> {
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public DailyExpenditureRequest() {
     }
 

@@ -12,8 +12,9 @@ import static de.twiechert.linroad.kafka.stream.Util.pInt;
 import static de.twiechert.linroad.kafka.stream.Util.pLng;
 
 /**
- * Created by tafyun on 22.07.16.
-* key corresponds to (Time: t, VID: v, QID: q, XWay: x, Sinit: i, Send: e, DOW: d, TOD: y)
+ * Request handle for the travel time estimation requests.
+ * key corresponds to (Time: t, VID: v, QID: q, XWay: x, Sinit: i, Send: e, DOW: d, TOD: y)
+ *  @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
 public class TravelEstimationRequestHandler extends TupleHandler<Octet<Long, Integer, Integer, Integer, Integer, Integer, Integer, Integer>, Void> {

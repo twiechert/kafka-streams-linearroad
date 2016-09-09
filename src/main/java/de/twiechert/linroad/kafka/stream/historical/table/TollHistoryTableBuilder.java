@@ -3,7 +3,7 @@ package de.twiechert.linroad.kafka.stream.historical.table;
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.feeder.historical.TollHistoryRequestHandler;
-import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
+import de.twiechert.linroad.kafka.model.historical.XwayVehicleIdDay;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
@@ -27,19 +27,20 @@ public class TollHistoryTableBuilder {
     public TollHistoryTableBuilder() {
     }
 
-    public KTable<XwayVehicleDay, Double> getTable(KStreamBuilder builder) {
-        return builder.table(new XwayVehicleDay.Serde(),
+    public KTable<XwayVehicleIdDay, Double> getTable(KStreamBuilder builder) {
+        return builder.table(new DefaultSerde<XwayVehicleIdDay>(),
                 new Serdes.DoubleSerde(), context.topic(TollHistoryRequestHandler.TOPIC))
-                /**
-                 * Table gets fixed name
+                /*
+                  Table gets fixed name
                  */
                 .through(new DefaultSerde<>(), new Serdes.DoubleSerde(), TOPIC);
 
     }
 
-    public KTable<XwayVehicleDay, Double> getExistingTable(KStreamBuilder builder) {
 
-        return builder.table(new XwayVehicleDay.Serde(),
+    public KTable<XwayVehicleIdDay, Double> getExistingTable(KStreamBuilder builder) {
+
+        return builder.table(new DefaultSerde<>(),
                 new Serdes.DoubleSerde(), TOPIC);
 
     }

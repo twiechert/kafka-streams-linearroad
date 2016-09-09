@@ -28,8 +28,8 @@ public class FSTSerde<T extends Serializable> implements Serde<T> {
     static FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
 
 
-    /**
-     * PERFORMANCE BOOST --> Serialiezer does not need to write whole class names.
+    /*
+      PERFORMANCE BOOST --> Serialiezer does not need to write whole class names.
      */
     static {
         conf.registerClass(AccountBalanceRequest.class,
@@ -37,7 +37,7 @@ public class FSTSerde<T extends Serializable> implements Serde<T> {
                 AccidentDetectionStreamBuilder.AccidentDetectionValIntermediate.class,
                 DailyExpenditureRequest.class,
                 DailyExpenditureResponse.class,
-                XwayVehicleDay.class,
+                XwayVehicleIdDay.class,
                 AccidentNotification.class,
                 AverageVelocity.class,
                 CurrentToll.class,

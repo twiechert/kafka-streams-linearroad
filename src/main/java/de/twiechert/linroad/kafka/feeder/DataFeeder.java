@@ -5,12 +5,9 @@ import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * This class feeds the respective kafka topics with LR tuples.
@@ -49,7 +46,7 @@ public class DataFeeder {
 
         private TupleHandler[] tupleHandlers;
         private LinearRoadKafkaBenchmarkApplication.Context context;
-        private boolean firstArived = false;
+        private boolean firstArrived = false;
 
         public TupleReceivedCallback(LinearRoadKafkaBenchmarkApplication.Context context, TupleHandler... tupleHandlers) {
             this.tupleHandlers = tupleHandlers;
@@ -63,10 +60,10 @@ public class DataFeeder {
          * @param line the line representing a LR tuple
          */
         public void invoke(String line) {
-            if (!firstArived) {
+            if (!firstArrived) {
                 logger.debug("First element has arrived, starting timer.");
                 LinearRoadKafkaBenchmarkApplication.Context.markAsStarted();
-                firstArived = true;
+                firstArrived = true;
             }
             String[] tuple = line.split(",");
             // find a tuple handler that is able to process that tuple

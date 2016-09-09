@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quartet;
 
 
@@ -17,12 +16,12 @@ public class AccidentNotification extends Quartet<Integer, Long, Long, Integer> 
     public AccidentNotification() {
     }
 
-    public AccidentNotification(Long occurenceTime, Long emitTime, Integer segment) {
-        super(1, occurenceTime, emitTime, segment);
+    public AccidentNotification(Long occurrenceTime, Long emitTime, Integer segment) {
+        super(1, occurrenceTime, emitTime, segment);
     }
 
     @JsonIgnore
-    public long getOccurenceTime() {
+    public long getOccurrenceTime() {
         return getValue1();
     }
 

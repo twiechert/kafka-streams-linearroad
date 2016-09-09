@@ -1,7 +1,7 @@
 package de.twiechert.linroad.kafka.core.serde.provider;
 
-/**
- * Created by tafyun on 04.08.16.
+/*
+  Created by tafyun on 04.08.16.
  */
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -18,10 +18,11 @@ import java.util.Map;
 
 
 /**
- * Created by tafyun on 10.07.16.
+ * This Serde implementation used Jackson with the Smile format adapter (https://github.com/FasterXML/jackson-dataformat-smile).
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class JacksonSmileSerde<T extends Serializable> implements Serde<T> {
-
 
     private final java.lang.Class<T> classOb;
 

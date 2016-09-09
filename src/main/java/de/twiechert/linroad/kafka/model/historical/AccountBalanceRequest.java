@@ -5,11 +5,16 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Triplet;
 
 /**
- * Created by tafyun on 02.08.16.
+ * This class represents the account balance request object (query type 2).
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class AccountBalanceRequest extends Triplet<Long, Integer, Integer> {
 
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public AccountBalanceRequest() {
     }
 

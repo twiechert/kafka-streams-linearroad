@@ -1,8 +1,6 @@
 package de.twiechert.linroad.kafka.core.serde.provider;
 
-/**
- * Created by tafyun on 08.08.16.
- */
+
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferInput;
@@ -16,7 +14,9 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Created by tafyun on 10.07.16.
+ * This Serde implementation uses Kryio as library.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class KryoSerde<T extends Serializable> implements Serde<T> {
 

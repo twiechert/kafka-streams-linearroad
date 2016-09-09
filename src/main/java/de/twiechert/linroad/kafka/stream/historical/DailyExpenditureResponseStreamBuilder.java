@@ -30,14 +30,14 @@ public class DailyExpenditureResponseStreamBuilder extends StreamBuilder<Void, D
     }
 
     public KStream<Void, DailyExpenditureResponse> getStream(KStream<DailyExpenditureRequest, Void> dailyExpenditureRequestStream,
-                                                             KTable<XwayVehicleDay, Double> tollHistory) {
+                                                             KTable<XwayVehicleIdDay, Double> tollHistory) {
 
-        /**
-         * "...such that Type identifies this tuple as an daily expenditure request, Time is the time of the request, VID is the vehicle making the request, QID is the query identifier,
-         * and XWay and Day (1 . . .69) identify the expressway and the day (1 is yesterday, 69 is 10 weeks ago) for which an expenditure total is desired. ."
+        /*
+          "...such that Type identifies this tuple as an daily expenditure request, Time is the time of the request, VID is the vehicle making the request, QID is the query identifier,
+          and XWay and Day (1 . . .69) identify the expressway and the day (1 is yesterday, 69 is 10 weeks ago) for which an expenditure total is desired. ."
          */
-        KStream<XwayVehicleDay, DailyExpenditureRequest> accountBalanceRequestsPerVehicleXwayAndDay =
-                dailyExpenditureRequestStream.map((k, v) -> new KeyValue<>(new XwayVehicleDay(k.getXWay(), k.getVehicleId(), k.getDay()), k))
+        KStream<XwayVehicleIdDay, DailyExpenditureRequest> accountBalanceRequestsPerVehicleXwayAndDay =
+                dailyExpenditureRequestStream.map((k, v) -> new KeyValue<>(new XwayVehicleIdDay(k.getXWay(), k.getVehicleId(), k.getDay()), k))
                         .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("ACC_BALANCE_PER_XWAY_VEH_DAY"));
 
 

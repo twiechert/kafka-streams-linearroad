@@ -1,7 +1,7 @@
 package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.time.TupleTimestampExtrator;
+import de.twiechert.linroad.kafka.core.time.TupleTimestampExtractor;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -56,11 +56,11 @@ public class PositionReportHandler extends TupleHandler<XwaySegmentDirection, Po
 
     public static class TimeStampExtractor implements TimestampExtractor {
 
-        private final TupleTimestampExtrator tupleTimestampExtrator = new TupleTimestampExtrator(TupleTimestampExtrator.KeyValue.Value, 0);
+        private final TupleTimestampExtractor tupleTimestampExtractor = new TupleTimestampExtractor(TupleTimestampExtractor.KeyValue.Value, 0);
 
         @Override
         public long extract(ConsumerRecord<Object, Object> record) {
-            return tupleTimestampExtrator.extract(record);
+            return tupleTimestampExtractor.extract(record);
         }
     }
 }

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
  * This class creates a table that holds the sum of expenditures during the simulation until know.
  * An update of that table is triggered by the segment-crossing
  *
- * "Every time a vehicle issues its first position report from a seg- ment, a toll for that segment is calculated and the vehicle is notified of that toll.
+ * "Every time a vehicle issues its first position report from a segment, a toll for that segment is calculated and the vehicle is notified of that toll.
  * Every time a position report identifies a vehicle as crossing from one segment into another,
  * the toll reported for the segment being exited is assessed to the vehicle’s account.
  * Thus, a toll calculation for one seg- ment often is concurrent with an account being debited for the previous segment."
@@ -42,9 +42,9 @@ public class CurrentExpenditurePerVehicleTableBuilder {
 
         // instead
         return consecutivePositionReports
-                /**
-                 * When position report for change to segment s, we need to assses segment s-1 and for that we need
-                 * the toll valid at minute(s-1) -> this is shipped with the consecutivePositionReports stream
+                /*
+                  When position report for change to segment s, we need to assses segment s-1 and for that we need
+                  the toll valid at minute(s-1) -> this is shipped with the consecutivePositionReports stream
                  */
                 .map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getSegment() - 1, k.getDir()),
                         new TollNotificationStreamBuilder.ConsecutivePosReportIntermediate(Util.minuteOfReport(v.getPredecessorTime()), v.getTime(), k.getVehicleId())))

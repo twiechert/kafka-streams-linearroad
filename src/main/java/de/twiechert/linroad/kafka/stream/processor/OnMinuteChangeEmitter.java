@@ -117,7 +117,7 @@ public class OnMinuteChangeEmitter {
         public void process(K key, V value) {
             kvStore.put(new TimedKey<>(key, value.getWindowEndMinute()), value);
             synchronized (this) {
-                // it may be that at minte m there are no tuples => then tuple from m-1 is not emmited
+                // it may be that at minute m there are no tuples => then tuple from m-1 is not emmited
                 // --> thus do a lookup for 2 seconds
                 for (int i = 1; i <= checkUpTo; i++) {
                     TimedKey<K> oldKey = new TimedKey<>(key, value.getMinute() - i);
@@ -182,8 +182,7 @@ public class OnMinuteChangeEmitter {
         public void process(K key, V value) {
             kvStore.put(new TimedKey<>(key, value.getMinute()), value);
             synchronized (this) {
-                // it may be that at minte m there are no tuples => then tuple from m-1 is not emmited
-                // --> thus do a lookup for 2 seconds
+
                 for (int i = 1; i <= checkUpTo; i++) {
                     TimedKey<K> oldKey = new TimedKey<>(key, value.getMinute() - i);
                     V oldVal = kvStore.get(oldKey);

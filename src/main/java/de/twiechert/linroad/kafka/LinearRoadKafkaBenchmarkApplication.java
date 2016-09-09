@@ -34,7 +34,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
@@ -118,7 +117,7 @@ public class LinearRoadKafkaBenchmarkApplication {
             logger.debug("Using mode {}", context.getLinearRoadMode());
             KStreamBuilder builder = new KStreamBuilder();
             context.setBuilder(builder);
-            KTable<XwayVehicleDay, Double> tollHistoryTable = null;
+            KTable<XwayVehicleIdDay, Double> tollHistoryTable = null;
 
             // historical info feeding
             if (!context.getLinearRoadMode().equals("no-historical-feed")) {
@@ -135,85 +134,85 @@ public class LinearRoadKafkaBenchmarkApplication {
                 logger.debug("Starting benchmark");
                 tollHistoryTable = (tollHistoryTable == null) ? tollHistoryTableBuilder.getExistingTable(builder) : tollHistoryTable;
 
-                /**
-                 * Converting position reports to processable Kafka stream
+                /*
+                  Converting position reports to processable Kafka stream
                  */
                 KStream<XwaySegmentDirection, PositionReport> positionReportStream = positionReportStreamBuilder.getStream(builder);
                 if (context.getDebugList().contains("POS_REP")) positionReportStream.print();
 
-                /**
-                 * A reduced version of the position report stream, that only considers the first position report within a segment per vehicle.
-                 * This is required for both the accident and toll notification, which are only triggered, if a position report has no predecessor from the same segment.
+                /*
+                  A reduced version of the position report stream, that only considers the first position report within a segment per vehicle.
+                  This is required for both the accident and toll notification, which are only triggered, if a position report has no predecessor from the same segment.
                  */
                 KStream<VehicleIdXwayDirection, SegmentCrossing> segmentCrossingPositionReportStream = segmentCrossingPositionReportBuilder.getStream(positionReportStream);
                 if (context.getDebugList().contains("POS_SEG")) segmentCrossingPositionReportStream.print();
 
-                /**
-                 * Converting account balance request to processable Kafka stream
+                /*
+                  Converting account balance request to processable Kafka stream
                  */
                 KStream<AccountBalanceRequest, Void> accountBalanceRequestStream = accountBalanceStreamBuilder.getStream(builder);
                 if (context.getDebugList().contains("ACCB_REQ")) accountBalanceRequestStream.print();
 
-                /**
-                 * Converting daily expenditure request to processable Kafka stream
+                /*
+                  Converting daily expenditure request to processable Kafka stream
                  */
                 KStream<DailyExpenditureRequest, Void> dailyExpenditureRequestStream = dailyExpenditureRequestStreamBuilder.getStream(builder);
                 if (context.getDebugList().contains("DEXP_REQ")) dailyExpenditureRequestStream.print();
 
-                /**
-                 * Building NOV stream
+                /*
+                  Building NOV stream
                  */
                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream = numberOfVehiclesStreamBuilder.getStream(positionReportStream);
                 if (context.getDebugList().contains("NOV")) numberOfVehiclesStream.print();
 
-                /**
-                 * Building LAV stream
+                /*
+                  Building LAV stream
                  */
                 KStream<XwaySegmentDirection, AverageVelocity> latestAverageVelocityStream = latestAverageVelocityStreamBuilder.getStream(positionReportStream);
                 if (context.getDebugList().contains("LAV")) latestAverageVelocityStream.print();
 
-                /**
-                 * Building Accident detection stream
+                /*
+                  Building Accident detection stream
                  */
                 KStream<XwaySegmentDirection, Long> accidentDetectionStream = accidentDetectionStreamBuilder.getStream(positionReportStream);
                 if (context.getDebugList().contains("ACC_DET")) accidentDetectionStream.print();
 
-                /**
-                 * Building Accident notification stream
+                /*
+                  Building Accident notification stream
                  */
                 KStream<Void, AccidentNotification> accidentNotificationStream = accidentNotificationStreamBuilder.getStream(segmentCrossingPositionReportStream, accidentDetectionStream);
                 accidentNotificationStream.writeAsText("output/" + accidentNotificationStreamBuilder.getOutputTopic() + ".csv", accidentNotificationStreamBuilder.getKeySerde(), accidentNotificationStreamBuilder.getValueSerde());
 
-                /**
-                 * Building current toll per Xway-Segmen-Directon tuple stream
+                /*
+                  Building current toll per Xway-Segmen-Directon tuple stream
                  */
                 KStream<XwaySegmentDirection, CurrentToll> currentTollStream = currentTollStreamBuilder.getStream(latestAverageVelocityStream, numberOfVehiclesStream, accidentDetectionStream);
                 if (context.getDebugList().contains("CURR_TOLL")) currentTollStream.print();
 
-                /**
-                 * Building stream to notify driver about tolls
+                /*
+                  Building stream to notify driver about tolls
                  */
                 KStream<Void, TollNotification> tollNotificationStream = tollNotificationStreamBuilder.getStream(segmentCrossingPositionReportStream, currentTollStream);
                 tollNotificationStream.writeAsText("output/" + tollNotificationStreamBuilder.getOutputTopic() + ".csv", tollNotificationStreamBuilder.getKeySerde(), tollNotificationStreamBuilder.getValueSerde());
 
 
-                /**
-                 * Creating tables to retain the latest state about tolls
-                 * (a) recent toll per vehicle
-                 * (b) toll per vehicle, per day, per expressway
+                /*
+                  Creating tables to retain the latest state about tolls
+                  (a) recent toll per vehicle
+                  (b) toll per vehicle, per day, per expressway
                  */
                 // this table may be derived from the above (how to realize in Kafka streams?)
                 KTable<Integer, ExpenditureAt> tollPerVehicleTable = currentExpenditurePerVehicleTableBuilder.getStream(segmentCrossingPositionReportStream, currentTollStream);
                 if (context.getDebugList().contains("CURR_TOLL_TAB")) tollPerVehicleTable.print();
 
-                /**
-                 * Building stream to answer account balance requests
+                /*
+                  Building stream to answer account balance requests
                  */
                 KStream<Void, AccountBalanceResponse> accountBalanceResponseStream = accountBalanceResponseStreamBuilder.getStream(accountBalanceRequestStream, tollPerVehicleTable);
                 accountBalanceResponseStream.writeAsText("output/" + accountBalanceResponseStreamBuilder.getOutputTopic() + ".csv", accountBalanceResponseStreamBuilder.getKeySerde(), accountBalanceResponseStreamBuilder.getValueSerde());
 
-                /**
-                 * Building stream to answer daily expenditure requests
+                /*
+                  Building stream to answer daily expenditure requests
                  */
                 KStream<Void, DailyExpenditureResponse> dailyExpenditureResponseStream = dailyExpenditureResponseStreamBuilder.getStream(dailyExpenditureRequestStream, tollHistoryTable);
                 dailyExpenditureResponseStream.writeAsText("output/" + dailyExpenditureResponseStreamBuilder.getOutputTopic() + ".csv", dailyExpenditureResponseStreamBuilder.getKeySerde(), dailyExpenditureResponseStreamBuilder.getValueSerde());

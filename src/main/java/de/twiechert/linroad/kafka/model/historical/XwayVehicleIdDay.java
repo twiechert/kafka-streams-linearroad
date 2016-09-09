@@ -5,14 +5,19 @@ import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Triplet;
 
 /**
- * Created by tafyun on 02.08.16.
+ * This class represents an (Xway,VehicleId,Day) tuple.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-public class XwayVehicleDay extends Triplet<Integer, Integer, Integer> {
+public class XwayVehicleIdDay extends Triplet<Integer, Integer, Integer> {
 
-    public XwayVehicleDay() {
+    /**
+     * Default constructor may be required depending or serialization library
+     */
+    public XwayVehicleIdDay() {
     }
 
-    public XwayVehicleDay(Integer xway, Integer vehicleId, Integer day) {
+    public XwayVehicleIdDay(Integer xway, Integer vehicleId, Integer day) {
         super(xway, vehicleId, day);
     }
 
@@ -31,10 +36,8 @@ public class XwayVehicleDay extends Triplet<Integer, Integer, Integer> {
         return getValue2();
     }
 
-    public static class Serde extends DefaultSerde<XwayVehicleDay> {
-    }
 
     public static class Serializer
-            extends DefaultSerde.DefaultSerializer<XwayVehicleDay> {
+            extends DefaultSerde.DefaultSerializer<XwayVehicleIdDay> {
     }
 }

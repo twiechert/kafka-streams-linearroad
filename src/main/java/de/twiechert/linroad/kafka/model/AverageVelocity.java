@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 import java.io.Serializable;

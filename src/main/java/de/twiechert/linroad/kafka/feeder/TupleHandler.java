@@ -12,7 +12,9 @@ import java.util.Properties;
 import static de.twiechert.linroad.kafka.stream.Util.pInt;
 
 /**
- * Created by tafyun on 21.07.16.
+ * Base class for the request handlers, that extract the required information of the LR tuples and send them to the corresponding topics.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public abstract class TupleHandler<Outputkey, OutputValue> {
 

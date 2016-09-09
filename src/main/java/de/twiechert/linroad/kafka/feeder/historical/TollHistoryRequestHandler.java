@@ -2,7 +2,7 @@ package de.twiechert.linroad.kafka.feeder.historical;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.feeder.TupleHandler;
-import de.twiechert.linroad.kafka.model.historical.XwayVehicleDay;
+import de.twiechert.linroad.kafka.model.historical.XwayVehicleIdDay;
 import org.apache.kafka.common.serialization.DoubleSerializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import static de.twiechert.linroad.kafka.stream.Util.pInt;
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 @Component
-public class TollHistoryRequestHandler extends TupleHandler<XwayVehicleDay, Double> {
+public class TollHistoryRequestHandler extends TupleHandler<XwayVehicleIdDay, Double> {
 
     public static final String TOPIC = "TOLL_HIST_TABLE";
 
@@ -26,8 +26,8 @@ public class TollHistoryRequestHandler extends TupleHandler<XwayVehicleDay, Doub
     }
 
     @Override
-    protected XwayVehicleDay transformKey(String[] tuple) {
-        return new XwayVehicleDay(pInt(tuple[2]), pInt(tuple[0]), pInt(tuple[1]));
+    protected XwayVehicleIdDay transformKey(String[] tuple) {
+        return new XwayVehicleIdDay(pInt(tuple[2]), pInt(tuple[0]), pInt(tuple[1]));
     }
 
     @Override
@@ -36,8 +36,8 @@ public class TollHistoryRequestHandler extends TupleHandler<XwayVehicleDay, Doub
     }
 
     @Override
-    protected Class<? extends Serializer<XwayVehicleDay>> getKeySerializerClass() {
-        return XwayVehicleDay.Serializer.class;
+    protected Class<? extends Serializer<XwayVehicleIdDay>> getKeySerializerClass() {
+        return XwayVehicleIdDay.Serializer.class;
     }
 
     @Override

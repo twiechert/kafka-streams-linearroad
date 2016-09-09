@@ -12,6 +12,9 @@ import org.javatuples.Sextet;
  */
 public class AccountBalanceResponse extends Sextet<Integer, Long, Long, Long, Integer, Double> {
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public AccountBalanceResponse() {
     }
 
@@ -46,17 +49,4 @@ public class AccountBalanceResponse extends Sextet<Integer, Long, Long, Long, In
 
 
 
-    public static class Serde extends DefaultSerde<AccountBalanceResponse> {
-        public Serde() {
-
-        }
-    }
-
-    public static class Serializer
-            extends DefaultSerde.DefaultSerializer<AccountBalanceResponse> {
-
-        public Serializer() {
-
-        }
-    }
 }

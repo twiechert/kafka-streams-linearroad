@@ -10,7 +10,7 @@ import org.javatuples.Tuple;
  * For that purpose you specify, if the timestamp is read from the key or value and the position within the tuple (beginning with 0)
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
-public class TupleTimestampExtrator extends FallbackTimestampExtractor implements TimestampExtractor {
+public class TupleTimestampExtractor extends FallbackTimestampExtractor implements TimestampExtractor {
 
 
     private final KeyValue keyValue;
@@ -22,7 +22,7 @@ public class TupleTimestampExtrator extends FallbackTimestampExtractor implement
      * @param keyValue the part of the message to extract the timestamp from
      * @param pos the position to extract the timestamp from
      */
-    public TupleTimestampExtrator(KeyValue keyValue, int pos) {
+    public TupleTimestampExtractor(KeyValue keyValue, int pos) {
         this.keyValue = keyValue;
         this.pos = pos;
     }
@@ -44,8 +44,8 @@ public class TupleTimestampExtrator extends FallbackTimestampExtractor implement
     }
 
     private long extract(Object record) {
-        /**
-         * DO NOT CHANGE ORDER!! TUPLE EXTRACTION HAS PRESEDENCE
+        /*
+          DO NOT CHANGE ORDER!! TUPLE EXTRACTION HAS PRESEDENCE
          */
         if (record instanceof Tuple)
             return (long) ((Tuple) record).getValue(pos);

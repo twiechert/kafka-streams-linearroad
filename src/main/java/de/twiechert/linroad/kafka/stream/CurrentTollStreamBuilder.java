@@ -2,7 +2,6 @@ package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
-import de.twiechert.linroad.kafka.stream.processor.OnMinuteChangeEmitter;
 import de.twiechert.linroad.kafka.model.*;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.kstream.JoinWindows;
@@ -47,7 +46,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
                         new DefaultSerde<>(), new Serdes.LongSerde());
 
-        // no need to use the OnMiniteChangeEmitter, because source streams have already been reduces...
+        // no need to use the OnMinuteChangeEmitter, because source streams have already been reduces...
         return joinedTollCalculationStream
                 .filter((k, v) -> v.hasNoAccident() && v.getAverageVelocity() < 40 && v.getNumberOfVehicles() > 50)
                 // otherwise calculate toll

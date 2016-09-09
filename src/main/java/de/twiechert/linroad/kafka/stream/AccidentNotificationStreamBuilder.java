@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  * For that purpose, the segment crossing position report is used, because position reports can only trigger
  * accident notifications, if the preceding position report of the same vehicle has not been issued from the same segment.
  *
- * Thus, it is convinient to use the reduced segment crossing position report stream, that only contains the first position report within a segment per vehicle.
+ * Thus, it is convenient to use the reduced segment crossing position report stream, that only contains the first position report within a segment per vehicle.
  *
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
@@ -41,16 +41,16 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
         logger.debug("Building stream to notify drivers about accidents");
 
 
-        /**
-         * We do not use the normal position report stream, because two consecutive position reports from the same segment must not cause two accident notifications.
-         * We use the consecutive position report stream, that only emits the first position report in a segment per vehicle.
+        /*
+          We do not use the normal position report stream, because two consecutive position reports from the same segment must not cause two accident notifications.
+          We use the consecutive position report stream, that only emits the first position report in a segment per vehicle.
          */
         KStream<XwaySegmentDirection, AccidentNotificationIntermediate> segmentCrossingPositionReportsForAccNotification = segmentCrossingPositionReports.map((k, v) -> new KeyValue<>(new XwaySegmentDirection(k.getXway(), v.getSegment(), k.getDir()), AccidentNotificationIntermediate.fromPosReport(v)))
                 .through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("ACC_DET_POS"));
-        /**
-         * The trigger for an accident notification is a position report
-         * that identifies a vehicle entering a segment 0 to 4 segments upstream of some accident location,
-         * but only if q was emitted no earlier than theminute following theminutewhen the accident occurred, and no later than the minute the accident is
+        /*
+          The trigger for an accident notification is a position report
+          that identifies a vehicle entering a segment 0 to 4 segments upstream of some accident location,
+          but only if q was emitted no earlier than theminute following theminutewhen the accident occurred, and no later than the minute the accident is
          */
 
         /*
