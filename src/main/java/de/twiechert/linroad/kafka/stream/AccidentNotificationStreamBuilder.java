@@ -60,10 +60,9 @@ public class AccidentNotificationStreamBuilder extends StreamBuilder<Void, Accid
          * Thus, a position report at minute $m$ will not trigger an accident notification of an accident occurred at the same minute.
          * Technically this is approached by modifying the event time of the position report source stream.
          */
-
         return  accidentReports.join(segmentCrossingPositionReportsForAccNotification, (value1, value2) -> value2, JoinWindows.of(context.topic("ACC_NOT_WINDOW")),
                         new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
-                // no notification required if exitlane
+                // no notification required if exit-lane
                 .filter((k,v) -> v.getLane() != 4)
                 .map((k, v) -> new KeyValue<>(new Void(), new AccidentNotification(v.getPositionRepRequestTimeInSec(), LinearRoadKafkaBenchmarkApplication.Context.getCurrentRuntimeInSeconds(), k.getSeg())));
 

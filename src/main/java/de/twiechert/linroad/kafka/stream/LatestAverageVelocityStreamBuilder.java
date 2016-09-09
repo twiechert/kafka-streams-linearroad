@@ -45,7 +45,6 @@ public class LatestAverageVelocityStreamBuilder {
 
         return OnMinuteChangeEmitter.getForWindowed(context.getBuilder(), lavAgg, new DefaultSerde<>(), new DefaultSerde<>(), "latest-lav");
 
-
     }
 
     public static class LatestAverageVelocityIntermediate extends Triplet<Long, Integer, Double> {

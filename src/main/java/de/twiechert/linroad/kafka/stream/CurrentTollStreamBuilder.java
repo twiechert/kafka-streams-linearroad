@@ -36,11 +36,6 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                                                                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream,
                                                                 KStream<XwaySegmentDirection, Long> accidentDetectionStream) {
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
-
-
-        //  KStream<XwaySegmentDirection, CurrentToll> xwaySegmentDirectionCurrentTollKStream =
-
-
         KStream<XwaySegmentDirection, CurrentTollIntermediate> joinedTollCalculationStream = numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
                 .join(latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("NOV_TOLL")),
                         (value1, value2) -> new CurrentTollIntermediate(value2.getMinute(), value2.getAverageSpeed(), value1.getNumberOfVehicles()),
@@ -51,9 +46,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
                         new DefaultSerde<>(), new DefaultSerde<>());
 
-        // only take latest aggs...
-        //return OnMinuteChangeEmitter.get(context.getBuilder(), joinedTollCalculationStream, new DefaultSerde<>(), new DefaultSerde<>(), "latest-toll")
-                // if no toll, simply do not emmit -> the specification is in that regard not explicit enough
+        // no need to use the OnMiniteChangeEmitter, because source streams have already been reduces...
         return joinedTollCalculationStream
                 .filter((k, v) -> v.hasNoAccident() && v.getAverageVelocity() < 40 && v.getNumberOfVehicles() > 50)
                 // otherwise calculate toll
@@ -82,10 +75,14 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
             return new CurrentTollIntermediate(this.getValue0(), this.getValue1(), this.getValue2(), noAccident);
         }
 
+        /**
+         * Calculates the current toll based on the information given in the object.
+         *
+         * @return the current toll.
+         */
         public CurrentToll calculateCurrentToll() {
             return new CurrentToll(this.getMinute() + 1, 2 * Math.pow(this.getNumberOfVehicles() - 50, 2), this.getAverageVelocity());
         }
-
 
         public long getMinute() {
             return getValue0();

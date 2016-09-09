@@ -43,8 +43,7 @@ public class AccidentDetectionStreamBuilder {
 
         // an accident at minute m expressway x, segment s, direction d will be mapped to all segments downstream 0..4
         //detect an accident on a given segment whenever two or more vehicles are stopped in that segment at the same lane and position
-        // therefore flatmapping to all affected segments
-
+        // therefore flat-mapping to all affected segments
         KStream<XwayLaneDirSegPosIntermediate, AccidentDetectionValIntermediate> accDetection = positionReportStream
                 .filter((k, v) -> v.getSpeed() == 0)
                 .map((key, value) -> new KeyValue<>(
@@ -59,7 +58,7 @@ public class AccidentDetectionStreamBuilder {
                             } else {
                                 agg.getVehicleMap().put(value.getValue1(), agg.getVehicleMap().get(value.getValue1()) + 1);
                             }
-                            // the latest timestamp is updated again, which is required by the punctuator to work properply
+                            // the latest timestamp is updated again, which is required by the OnMinuteChangeEmitter to work properly
                             return new AccidentDetectionValIntermediate(Util.minuteOfReport(value.getValue0()), agg.getVehicleMap());
                         }
                         , accDetectionWindow, new DefaultSerde<>(), new DefaultSerde<>())
@@ -68,8 +67,8 @@ public class AccidentDetectionStreamBuilder {
 
         return OnMinuteChangeEmitter.getForWindowed(context.getBuilder(), accDetection, new DefaultSerde<>(), new DefaultSerde<>(), "latest-acc")
 
-                /**
-                 * There must be at least two cars emitting four consecutive position reports.
+                /*
+                  There must be at least two cars emitting four consecutive position reports.
                  */
                 .filter((k, v) -> v.getVehicleMap().entrySet().stream().filter(p -> p.getValue() >= 4).count() >= 2)
 

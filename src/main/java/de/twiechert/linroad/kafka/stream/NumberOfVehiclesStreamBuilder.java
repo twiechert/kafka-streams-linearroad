@@ -21,7 +21,6 @@ import java.util.HashSet;
 
 /**
  * This class builds the number of vehicles that per (expressway, segment, direction) tuple.
- * The tuples that are output corresspond to minute m+1...
  *
  * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
