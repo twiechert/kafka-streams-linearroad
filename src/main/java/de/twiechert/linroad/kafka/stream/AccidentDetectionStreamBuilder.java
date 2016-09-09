@@ -46,21 +46,21 @@ public class AccidentDetectionStreamBuilder {
         // therefore flatmapping to all affected segments
 
         KStream<XwayLaneDirSegPosIntermediate, AccidentDetectionValIntermediate> accDetection = positionReportStream
-                //.filter((k, v) -> v.getSpeed() == 0)
+                .filter((k, v) -> v.getSpeed() == 0)
                 .map((key, value) -> new KeyValue<>(
                 new XwayLaneDirSegPosIntermediate(key.getXway(), value.getLane(), key.getDir(), key.getSeg(), value.getPos()),
                 new Pair<>(value.getTime(), value.getVehicleId())))
                 // current time to use | if more than one vehicle in window | current count of position reports in window
 
                 .aggregateByKey(() -> new AccidentDetectionValIntermediate(0L, new HashMap<>()),
-                        (key, value, aggregat) -> {
-                            if (!aggregat.getVehicleMap().containsKey(value.getValue1())) {
-                                aggregat.getVehicleMap().put(value.getValue1(), 1);
+                        (key, value, agg) -> {
+                            if (!agg.getVehicleMap().containsKey(value.getValue1())) {
+                                agg.getVehicleMap().put(value.getValue1(), 1);
                             } else {
-                                aggregat.getVehicleMap().put(value.getValue1(), aggregat.getVehicleMap().get(value.getValue1()) + 1);
+                                agg.getVehicleMap().put(value.getValue1(), agg.getVehicleMap().get(value.getValue1()) + 1);
                             }
                             // the latest timestamp is updated again, which is required by the punctuator to work properply
-                            return new AccidentDetectionValIntermediate(Util.minuteOfReport(value.getValue0()), aggregat.getVehicleMap());
+                            return new AccidentDetectionValIntermediate(Util.minuteOfReport(value.getValue0()), agg.getVehicleMap());
                         }
                         , accDetectionWindow, new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream()

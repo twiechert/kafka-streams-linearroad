@@ -234,6 +234,8 @@ public class LinearRoadKafkaBenchmarkApplication {
             if (!context.getLinearRoadMode().equals("no-benchmark")) {
                 logger.debug("Start feeding of tuples");
                 positionReporter.startFeeding();
+                logger.debug("Feeding Finished.");
+
             }
         }
     }
@@ -298,6 +300,7 @@ public class LinearRoadKafkaBenchmarkApplication {
             // streamBaseConfig.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 0);
 
             producerBaseConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
             producerBaseConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerBaseConfig.put(ProducerConfig.RETRIES_CONFIG, 0);
             //producerBaseConfig.put(ProducerConfig.BATCH_SIZE_CONFIG, 0); //16384);
