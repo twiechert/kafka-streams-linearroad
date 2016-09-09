@@ -45,7 +45,6 @@
             <artifactId>kafka-streams</artifactId>
             <version>494ab42</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>

@@ -2,9 +2,7 @@ package de.twiechert.linroad.kafka.core.serde.provider;
 
 import de.twiechert.linroad.kafka.model.*;
 import de.twiechert.linroad.kafka.model.historical.*;
-import de.twiechert.linroad.kafka.stream.AccidentNotificationStreamBuilder;
-import de.twiechert.linroad.kafka.stream.LatestAverageVelocityStreamBuilder;
-import de.twiechert.linroad.kafka.stream.NumberOfVehiclesStreamBuilder;
+import de.twiechert.linroad.kafka.stream.*;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
@@ -36,6 +34,7 @@ public class FSTSerde<T extends Serializable> implements Serde<T> {
     static {
         conf.registerClass(AccountBalanceRequest.class,
                 AccountBalanceResponse.class,
+                AccidentDetectionStreamBuilder.AccidentDetectionValIntermediate.class,
                 DailyExpenditureRequest.class,
                 DailyExpenditureResponse.class,
                 XwayVehicleDay.class,
@@ -43,6 +42,7 @@ public class FSTSerde<T extends Serializable> implements Serde<T> {
                 AverageVelocity.class,
                 CurrentToll.class,
                 NumberOfVehicles.class,
+                TollNotificationStreamBuilder.ConsecutivePosReportIntermediate.class,
                 PositionReport.class,
                 TollNotification.class,
                 VehicleIdXwayDirection.class,

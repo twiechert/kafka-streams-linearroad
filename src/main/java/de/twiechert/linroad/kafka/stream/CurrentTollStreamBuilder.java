@@ -4,6 +4,7 @@ import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.stream.processor.OnMinuteChangeEmitter;
 import de.twiechert.linroad.kafka.model.*;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
 import org.javatuples.Quartet;
@@ -44,7 +45,7 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                 .leftJoin(accidentDetectionStream,
                         (value1, value2) -> value1.setNoAccident(value2 == null),
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
-                        new DefaultSerde<>(), new DefaultSerde<>());
+                        new DefaultSerde<>(), new Serdes.LongSerde());
 
         // no need to use the OnMiniteChangeEmitter, because source streams have already been reduces...
         return joinedTollCalculationStream
