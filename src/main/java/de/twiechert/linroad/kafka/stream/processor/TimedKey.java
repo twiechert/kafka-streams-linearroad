@@ -5,7 +5,8 @@ import de.twiechert.linroad.kafka.model.TimedOnMinute;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 03.09.16.
+ * This class is used by the {@link OnMinuteChangeEmitter} to assign the minute of occurrence to a tuple.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class TimedKey<Key> implements TimedOnMinute, Comparable<TimedKey<Key>>, Serializable {
 
@@ -14,6 +15,9 @@ public class TimedKey<Key> implements TimedOnMinute, Comparable<TimedKey<Key>>, 
     private Long minute;
 
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public TimedKey() {
 
     }

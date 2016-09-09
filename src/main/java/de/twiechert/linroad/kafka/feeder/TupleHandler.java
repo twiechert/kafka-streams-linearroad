@@ -9,7 +9,7 @@ import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Properties;
 
-import static de.twiechert.linroad.kafka.core.Util.pInt;
+import static de.twiechert.linroad.kafka.stream.Util.pInt;
 
 /**
  * Created by tafyun on 21.07.16.

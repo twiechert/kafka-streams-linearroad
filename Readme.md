@@ -33,6 +33,12 @@ java -jar apps/kafka-streams-linearroad.jar \
 --spring.profiles.active=cluster
 ```
 
+### Building the application
+If you don't want to the program locally but build it instead, run:
+
+```
+clean package -Dmaven.test.skip=true
+```
 
 ## Serdes
 The benchmark is currently configured to use the [fast-serialization](https://github.com/RuedigerMoeller/fast-serialization) library, because in our conducted experiments in

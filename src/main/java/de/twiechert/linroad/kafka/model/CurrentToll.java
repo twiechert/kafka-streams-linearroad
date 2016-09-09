@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Triplet;
 
 /**
@@ -10,6 +9,9 @@ import org.javatuples.Triplet;
  */
 public class CurrentToll extends Triplet<Long, Double, Double> implements TimedOnMinute {
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public CurrentToll() {
     }
 
@@ -33,7 +35,5 @@ public class CurrentToll extends Triplet<Long, Double, Double> implements TimedO
     public long getMinute() {
         return getValue0();
     }
-
-    public static class Serde extends DefaultSerde<CurrentToll> {}
 
 }

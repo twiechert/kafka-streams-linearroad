@@ -11,11 +11,14 @@ import java.io.Serializable;
  */
 public class NumberOfVehicles extends Pair<Long, Integer> implements Serializable, TimedOnMinute {
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public NumberOfVehicles() {
     }
 
-    public NumberOfVehicles(Long time, Integer numberOfVehiles) {
-        super(time, numberOfVehiles);
+    public NumberOfVehicles(Long time, Integer numOfVehicles) {
+        super(time, numOfVehicles);
     }
 
     @JsonIgnore
@@ -28,6 +31,5 @@ public class NumberOfVehicles extends Pair<Long, Integer> implements Serializabl
     public Integer getNumberOfVehicles() {
         return getValue1();
     }
-
 
 }

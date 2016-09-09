@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.core;
+package de.twiechert.linroad.kafka.core.time;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.streams.processor.TimestampExtractor;

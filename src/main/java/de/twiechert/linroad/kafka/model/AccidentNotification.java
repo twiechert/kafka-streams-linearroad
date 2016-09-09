@@ -4,11 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import org.javatuples.Quartet;
 
+
 /**
- * Created by tafyun on 02.08.16.
+ * This class represents an accident notification according to the LR requirements.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class AccidentNotification extends Quartet<Integer, Long, Long, Integer> {
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public AccidentNotification() {
     }
 
@@ -29,11 +34,6 @@ public class AccidentNotification extends Quartet<Integer, Long, Long, Integer> 
     @JsonIgnore
     public int getSegment() {
         return getValue3();
-    }
-
-
-    public static class Serde extends DefaultSerde<AccidentNotification> {
-
     }
 
 }

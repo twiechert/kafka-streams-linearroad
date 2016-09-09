@@ -7,8 +7,8 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static de.twiechert.linroad.kafka.core.Util.pInt;
-import static de.twiechert.linroad.kafka.core.Util.pLng;
+import static de.twiechert.linroad.kafka.stream.Util.pInt;
+import static de.twiechert.linroad.kafka.stream.Util.pLng;
 
 /**
  * This class creates a Kafka topic for the daily expenditure requests.

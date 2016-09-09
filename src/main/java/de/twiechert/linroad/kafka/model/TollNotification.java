@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.javatuples.Sextet;
 
 /**
- * Created by tafyun on 01.08.16.
+ * This class represents a toll notification according to the LR requirements.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class TollNotification extends Sextet<Integer, Integer, Long, Long, Double, Double> {
 
@@ -13,6 +14,9 @@ public class TollNotification extends Sextet<Integer, Integer, Long, Long, Doubl
         // the xway is not required in the output tuple, but we use this stream for further table processing
     }
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public TollNotification() {
 
     }

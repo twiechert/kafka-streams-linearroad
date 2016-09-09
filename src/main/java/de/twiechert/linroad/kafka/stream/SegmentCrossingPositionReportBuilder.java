@@ -63,6 +63,6 @@ public class SegmentCrossingPositionReportBuilder {
                 .mapValues(v -> new SegmentCrossing(v.getValue0(), v.getValue1(), v.getValue3()))
                 // with that hack, we can save the time of the predecessor (timestamp of vehicle emitting position in segment before) which is required to the toll notification
                 // however, this assumes that events do not arrive out of order (per-key)
-                .aggregateByKey(SegmentCrossing::new, (key, value, agg) -> new SegmentCrossing(value, agg.getTime()), new DefaultSerde<>(), new DefaultSerde<>(), "SEG_CROSSISNGS_WITH_PREDECESSOR").toStream();
+                .aggregateByKey(SegmentCrossing::new, (key, value, agg) -> value.setPredecessorTime(agg.getTime()), new DefaultSerde<>(), new DefaultSerde<>(), context.topic("SEG_CROSSISNGS_WITH_PREDECESSOR")).toStream();
     }
 }

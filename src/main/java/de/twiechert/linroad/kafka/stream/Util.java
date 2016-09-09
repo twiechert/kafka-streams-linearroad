@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.core;
+package de.twiechert.linroad.kafka.stream;
 
 
 /**

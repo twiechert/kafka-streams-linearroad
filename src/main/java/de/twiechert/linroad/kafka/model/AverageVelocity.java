@@ -12,6 +12,9 @@ import java.io.Serializable;
  */
 public class AverageVelocity extends Triplet<Long, Double, Long> implements Serializable, TimedOnMinute.TimedOnMinuteWithWindowEnd {
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public AverageVelocity() {
     }
 
@@ -28,7 +31,6 @@ public class AverageVelocity extends Triplet<Long, Double, Long> implements Seri
     public double getAverageSpeed() {
         return getValue1();
     }
-
 
     @Override
     public long getWindowEndMinute() {

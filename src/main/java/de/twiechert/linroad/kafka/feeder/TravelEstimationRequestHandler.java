@@ -8,8 +8,8 @@ import org.javatuples.Octet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static de.twiechert.linroad.kafka.core.Util.pInt;
-import static de.twiechert.linroad.kafka.core.Util.pLng;
+import static de.twiechert.linroad.kafka.stream.Util.pInt;
+import static de.twiechert.linroad.kafka.stream.Util.pLng;
 
 /**
  * Created by tafyun on 22.07.16.

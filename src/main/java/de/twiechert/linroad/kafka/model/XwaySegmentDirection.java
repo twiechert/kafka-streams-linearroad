@@ -7,7 +7,8 @@ import org.javatuples.Triplet;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 29.07.16.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class XwaySegmentDirection extends Triplet<Integer, Integer, Boolean> implements Serializable{
 
@@ -15,6 +16,9 @@ public class XwaySegmentDirection extends Triplet<Integer, Integer, Boolean> imp
         super(xway, seg, dir);
     }
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public XwaySegmentDirection() {
     }
 

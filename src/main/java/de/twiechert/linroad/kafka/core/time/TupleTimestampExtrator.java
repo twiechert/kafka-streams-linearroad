@@ -1,4 +1,4 @@
-package de.twiechert.linroad.kafka.core;
+package de.twiechert.linroad.kafka.core.time;
 
 import de.twiechert.linroad.kafka.model.TimedOnMinute;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

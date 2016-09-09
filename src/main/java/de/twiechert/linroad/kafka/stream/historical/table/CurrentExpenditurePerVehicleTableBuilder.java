@@ -1,7 +1,7 @@
 package de.twiechert.linroad.kafka.stream.historical.table;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.Util;
+import de.twiechert.linroad.kafka.stream.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.CurrentToll;
 import de.twiechert.linroad.kafka.model.SegmentCrossing;

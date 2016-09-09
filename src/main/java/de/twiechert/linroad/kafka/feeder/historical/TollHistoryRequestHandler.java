@@ -8,8 +8,8 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static de.twiechert.linroad.kafka.core.Util.pDob;
-import static de.twiechert.linroad.kafka.core.Util.pInt;
+import static de.twiechert.linroad.kafka.stream.Util.pDob;
+import static de.twiechert.linroad.kafka.stream.Util.pInt;
 
 /**
  * This class handles a toll history tuple by sending it to the respective Kafka topic.

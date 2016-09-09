@@ -6,7 +6,8 @@ import org.javatuples.Triplet;
 import java.io.Serializable;
 
 /**
- * Created by tafyun on 29.07.16.
+ * Represents a (VehicleId,Xway,Direction) tuple.
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class VehicleIdXwayDirection extends Triplet<Integer, Integer, Boolean> implements Serializable {
 
@@ -19,10 +20,11 @@ public class VehicleIdXwayDirection extends Triplet<Integer, Integer, Boolean> i
         super(vehicleId, xwaySegmentDirection.getXway(), xwaySegmentDirection.getDir());
     }
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public VehicleIdXwayDirection() {
-
     }
-
 
     @JsonIgnore
     public Integer getVehicleId() {
@@ -38,8 +40,5 @@ public class VehicleIdXwayDirection extends Triplet<Integer, Integer, Boolean> i
     public Boolean getDir() {
         return getValue2();
     }
-
-
-
 
 }

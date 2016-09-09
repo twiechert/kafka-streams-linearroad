@@ -1,14 +1,10 @@
 package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
-import de.twiechert.linroad.kafka.feeder.PositionReportHandler;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.streams.StreamsConfig;
 
 import java.io.Serializable;
-import java.util.Properties;
 
 /**
  * Classes that create streams may extend this class.

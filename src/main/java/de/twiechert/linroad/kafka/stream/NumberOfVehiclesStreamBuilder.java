@@ -1,7 +1,6 @@
 package de.twiechert.linroad.kafka.stream;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.Util;
 import de.twiechert.linroad.kafka.core.serde.DefaultSerde;
 import de.twiechert.linroad.kafka.model.NumberOfVehicles;
 import de.twiechert.linroad.kafka.model.PositionReport;

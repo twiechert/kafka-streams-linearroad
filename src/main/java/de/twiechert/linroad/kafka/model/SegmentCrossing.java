@@ -3,7 +3,10 @@ package de.twiechert.linroad.kafka.model;
 import org.javatuples.Quartet;
 
 /**
- * Created by tafyun on 17.08.16.
+ * This class represents a segment crossing, i.e. a the first position report per segment and vehicle.
+ * It is required, because vehicles emit multiple such reports per segment and for toll notification, we must only consider the first.
+ *
+ * @author Tayfun Wiechert <tayfun.wiechert@gmail.com>
  */
 public class SegmentCrossing extends Quartet<Long, Integer, Integer, Long> {
 
@@ -16,11 +19,14 @@ public class SegmentCrossing extends Quartet<Long, Integer, Integer, Long> {
         super(time, segment, lane, -1L);
     }
 
+    /**
+     * Default constructor may be required depending or serialization library
+     */
     public SegmentCrossing() {
         super(-1L, -1, -1, -1L);
     }
 
-    public SegmentCrossing(SegmentCrossing segmentCrossing, Long predecessorTime) {
+    private SegmentCrossing(SegmentCrossing segmentCrossing, Long predecessorTime) {
         super(segmentCrossing.getTime(), segmentCrossing.getSegment(), segmentCrossing.getLane(), predecessorTime);
     }
 
@@ -36,10 +42,8 @@ public class SegmentCrossing extends Quartet<Long, Integer, Integer, Long> {
         return this.getValue2();
     }
 
-
     public SegmentCrossing setPredecessorTime(Long predecessorTime) {
-        setAt3(predecessorTime);
-        return this;
+        return new SegmentCrossing(this, predecessorTime);
     }
 
     public Long getPredecessorTime() {

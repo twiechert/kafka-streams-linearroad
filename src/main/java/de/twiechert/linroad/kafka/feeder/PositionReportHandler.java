@@ -1,7 +1,7 @@
 package de.twiechert.linroad.kafka.feeder;
 
 import de.twiechert.linroad.kafka.LinearRoadKafkaBenchmarkApplication;
-import de.twiechert.linroad.kafka.core.TupleTimestampExtrator;
+import de.twiechert.linroad.kafka.core.time.TupleTimestampExtrator;
 import de.twiechert.linroad.kafka.model.PositionReport;
 import de.twiechert.linroad.kafka.model.XwaySegmentDirection;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -10,8 +10,8 @@ import org.apache.kafka.streams.processor.TimestampExtractor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static de.twiechert.linroad.kafka.core.Util.pInt;
-import static de.twiechert.linroad.kafka.core.Util.pLng;
+import static de.twiechert.linroad.kafka.stream.Util.pInt;
+import static de.twiechert.linroad.kafka.stream.Util.pLng;
 
 /**
  * This class creates a Kafka topics for the position reports
