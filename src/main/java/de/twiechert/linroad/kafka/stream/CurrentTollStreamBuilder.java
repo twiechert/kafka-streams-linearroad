@@ -46,9 +46,9 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
                         new DefaultSerde<>(), new Serdes.LongSerde());
 
-        // no need to use the OnMinuteChangeEmitter, because source streams have already been reduces...
+        // no need to use the OnMinuteChangeEmitter, because source streams have already been reduced...
         return joinedTollCalculationStream
-                .filter((k, v) -> v.hasNoAccident() && v.getAverageVelocity() < 40 && v.getNumberOfVehicles() > 50)
+                .filter((k, v) -> v.isTollApplicable())
                 // otherwise calculate toll
                 .mapValues(CurrentTollIntermediate::calculateCurrentToll);
     }
@@ -60,18 +60,18 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
     }
 
 
-    public static class CurrentTollIntermediate extends Quartet<Long, Double, Integer, Boolean> implements TimedOnMinute {
+    static class CurrentTollIntermediate extends Quartet<Long, Double, Integer, Boolean> implements TimedOnMinute {
 
 
-        public CurrentTollIntermediate(Long minute, Double averageVelocity, Integer numberOfVehicles) {
+        CurrentTollIntermediate(Long minute, Double averageVelocity, Integer numberOfVehicles) {
             super(minute, averageVelocity, numberOfVehicles, true);
         }
 
-        public CurrentTollIntermediate(Long minute, Double averageVelocity, Integer numberOfVehicles, Boolean noAccident) {
+        CurrentTollIntermediate(Long minute, Double averageVelocity, Integer numberOfVehicles, Boolean noAccident) {
             super(minute, averageVelocity, numberOfVehicles, noAccident);
         }
 
-        public CurrentTollIntermediate setNoAccident(boolean noAccident) {
+        CurrentTollIntermediate setNoAccident(boolean noAccident) {
             return new CurrentTollIntermediate(this.getValue0(), this.getValue1(), this.getValue2(), noAccident);
         }
 
@@ -80,26 +80,29 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
          *
          * @return the current toll.
          */
-        public CurrentToll calculateCurrentToll() {
+        CurrentToll calculateCurrentToll() {
             return new CurrentToll(this.getMinute() + 1, 2 * Math.pow(this.getNumberOfVehicles() - 50, 2), this.getAverageVelocity());
+        }
+
+        boolean isTollApplicable() {
+            return this.hasNoAccident() && this.getAverageVelocity() < 40 && this.getNumberOfVehicles() > 50;
         }
 
         public long getMinute() {
             return getValue0();
         }
 
-        public double getAverageVelocity() {
+        double getAverageVelocity() {
             return getValue1();
         }
 
-        public int getNumberOfVehicles() {
+        int getNumberOfVehicles() {
             return getValue2();
         }
 
-        public boolean hasNoAccident() {
+        boolean hasNoAccident() {
             return getValue3();
         }
-
 
     }
 
