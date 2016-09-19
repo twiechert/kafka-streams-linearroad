@@ -62,14 +62,14 @@ public class AccidentDetectionStreamBuilder {
                         }
                         , accDetectionWindow, new DefaultSerde<>(), new DefaultSerde<>())
                 .toStream()
-                .map((k, v) -> new KeyValue<>(k.key(), v.setWindowEndMinute(Util.minuteOfReport(k.window().end()))));
+                .map((k, v) -> new KeyValue<>(k.key(), v.setWindowEndMinute(Util.minuteOfReport(k.window().end()))))
+                  /*
+                  There must be at least two cars emitting four consecutive position reports.
+                 */
+                .filter((k, v) -> v.getVehicleMap().entrySet().stream().filter(p -> p.getValue() >= 4).count() >= 2);
 
         return OnMinuteChangeEmitter.getForWindowed(context.getBuilder(), accDetection, new DefaultSerde<>(), new DefaultSerde<>(), "latest-acc")
 
-                /*
-                  There must be at least two cars emitting four consecutive position reports.
-                 */
-                .filter((k, v) -> v.getVehicleMap().entrySet().stream().filter(p -> p.getValue() >= 4).count() >= 2)
 
 
                 // key -> xway, segment, direction | value -> minute in which accident has been detected
