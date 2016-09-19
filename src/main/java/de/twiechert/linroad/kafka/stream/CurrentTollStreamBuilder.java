@@ -36,21 +36,18 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
                                                                 KStream<XwaySegmentDirection, NumberOfVehicles> numberOfVehiclesStream,
                                                                 KStream<XwaySegmentDirection, Long> accidentDetectionStream) {
         logger.debug("Building stream to calculate the current toll on expressway, segent, direction..");
-        KStream<XwaySegmentDirection, CurrentTollIntermediate> joinedTollCalculationStream = numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
+        return numberOfVehiclesStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("LAV_TOLL"))
                 .join(latestAverageVelocityStream.through(new DefaultSerde<>(), new DefaultSerde<>(), context.topic("NOV_TOLL")),
                         (value1, value2) -> new CurrentTollIntermediate(value2.getMinute(), value2.getAverageSpeed(), value1.getNumberOfVehicles()),
                         JoinWindows.of(context.topic("LAV-NOV-WINDOW")), new DefaultSerde<>(), new DefaultSerde<>(), new DefaultSerde<>())
-
                 .leftJoin(accidentDetectionStream,
                         (value1, value2) -> value1.setNoAccident(value2 == null),
                         JoinWindows.of(context.topic("LAV_NOV_ACC_WINDOW")),
-                        new DefaultSerde<>(), new Serdes.LongSerde());
-
-        // no need to use the OnMinuteChangeEmitter, because source streams have already been reduced...
-        return joinedTollCalculationStream
+                        new DefaultSerde<>(), new Serdes.LongSerde())
                 .filter((k, v) -> v.isTollApplicable())
                 // otherwise calculate toll
                 .mapValues(CurrentTollIntermediate::calculateCurrentToll);
+        // no need to use the OnMinuteChangeEmitter, because source streams have already been reduced...
     }
 
 
@@ -58,7 +55,6 @@ public class CurrentTollStreamBuilder extends StreamBuilder<XwaySegmentDirection
     public String getOutputTopic() {
         return TOPIC;
     }
-
 
     static class CurrentTollIntermediate extends Quartet<Long, Double, Integer, Boolean> implements TimedOnMinute {
 
