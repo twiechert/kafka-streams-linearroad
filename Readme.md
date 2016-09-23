@@ -1,6 +1,6 @@
 ## Description
 This is an implementation of the [Linear Road benchmark](http://www.isys.ucl.ac.be/vldb04/eProceedings/contents/pdf/RS12P1.PDF) using Kafka
-streams. A general discussion of the benchmark components and how they be realized, can be found [here](https://github.com/twiechert/kafka-streams-linearroad/blob/master/Components.pdf).
+streams. A general discussion of the benchmark components and how they have been realized can be found [here](https://github.com/twiechert/kafka-streams-linearroad/blob/master/Components.pdf).
 
 
 Simply start the main method located in `LinearRoadKafkaBenchmark` and pass the the input path to the raw data file (e.g. `--data-path=/home/tafyun/IdeaProjects/linearroad-java-driver/src/main/resources/datafile20seconds.dat`)
