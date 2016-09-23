@@ -9,7 +9,7 @@ and the kafka nodes (e.g. `linearroad.kafka.bootstrapservers=172.17.0.2:9092, 17
 ### Starting the application
 For most configurations there are default values specified which can be overiden as shown below. Because the cluster profile is set active,
 the application-cluster.properties file has precedence and overrides the deault values specified in application.properties. If you execute the program as shown below, all stream tuples of the NOV and LAV
-stream will be printed.
+stream will be printed to stdout.
 
 
 ```
@@ -17,7 +17,7 @@ java -jar apps/kafka-streams-linearroad.jar \
 --linearroad.data.path=/home/hadoop/linearroad/L1/car.dat \
 --linearroad.hisotical.data.path=/home/hadoop/linearroad/L1/car.dat.tolls.dat \
 --linearroad.kafka.bootstrapservers=localhost:9092 \
---linearroad.mode.debug=NOV,LAV
+--linearroad.mode.debug=NOV,LAV \
 --spring.profiles.active=cluster
 ```
 
@@ -28,8 +28,8 @@ java -jar apps/kafka-streams-linearroad.jar \
 --linearroad.data.path=/home/hadoop/linearroad/L1/car.dat \
 --linearroad.hisotical.data.path=/home/hadoop/linearroad/L1/car.dat.tolls.dat \
 --linearroad.kafka.bootstrapservers=localhost:9092 \
---linearroad.mode=no-historial-feed
---linearroad.mode.debug=NOV,LAV
+--linearroad.mode=no-historial-feed \
+--linearroad.mode.debug=NOV,LAV \
 --spring.profiles.active=cluster
 ```
 
@@ -43,6 +43,6 @@ clean package -Dmaven.test.skip=true
 ## Serdes
 The benchmark is currently configured to use the [fast-serialization](https://github.com/RuedigerMoeller/fast-serialization) library, because in our conducted experiments in
 the fastest and most space efficient library from those, we have tested. You may replace this library and this repository already integrates
-Serde implementation for Jackson (with Smile Addon) and Kryio all located in `core.serde.provider`. In order to change the library system-wise, simply make
+Serde implementation for Jackson (with Smile Addon) and Kryio, all located in `core.serde.provider`. In order to change the library system-wise, simply make
 the class `core.serde.DefaultSerde` extent a different Serde implementation.
 
