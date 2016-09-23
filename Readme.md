@@ -1,6 +1,6 @@
 ## Description
 This is an implementation of the [Linear Road benchmark](http://www.isys.ucl.ac.be/vldb04/eProceedings/contents/pdf/RS12P1.PDF) using Kafka
-streams. A general discussion of the benchmark components and how they be realized, can be found [here](https://github.com/twiechert/linear-road-general).
+streams. A general discussion of the benchmark components and how they be realized, can be found [here](https://github.com/twiechert/kafka-streams-linearroad/blob/master/Components.pdf).
 
 
 Simply start the main method located in `LinearRoadKafkaBenchmark` and pass the the input path to the raw data file (e.g. `--data-path=/home/tafyun/IdeaProjects/linearroad-java-driver/src/main/resources/datafile20seconds.dat`)
@@ -46,20 +46,3 @@ the fastest and most space efficient library from those, we have tested. You may
 Serde implementation for Jackson (with Smile Addon) and Kryio all located in `core.serde.provider`. In order to change the library system-wise, simply make
 the class `core.serde.DefaultSerde` extent a different Serde implementation.
 
-## L-Rating and validation Files
-The files have been creates using [Linear Generator](https://github.com/walmart/LinearGenerator) and
- [linearroad](https://github.com/walmart/linearroad)
-
-https://www.dropbox.com/s/ll8z934s6q278q5/L1.tar.gz?dl=1
-https://www.dropbox.com/s/mmcinm55te2c94y/validate_l1.tar.gz?dl=1
-
-https://www.dropbox.com/s/e22s5d2k9gpr3d5/L2.tar.gz?dl=1
-https://www.dropbox.com/s/qifoz1hmklm8l2n/validate_l2.tar.gz?dl=1
-
-https://www.dropbox.com/s/d0mlu2bqm4mal6f/L3.tar.gz?dl=1
-https://www.dropbox.com/s/g6e0zhkyrhd0lxn/validate_l3.tar.gz?dl=1
-
-https://www.dropbox.com/s/xssgj6tvyb4snrz/L4.tar.gz?dl=1
-
-
-https://www.dropbox.com/s/rl4udvdugqmx583/L6.tar.gz?dl=1
